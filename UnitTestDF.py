@@ -33,4 +33,4 @@ class Test_cls_currency_pair(unittest.TestCase):
         self.assertEqual(EURUSD.swap_point_factor, 1000)
         self.assertEqual(EURUSD.day_shift, 2)
         self.assertEqual(EURUSD.number_of_days_1year, 365)
-        self.assertTrue(isinstance(EURUSD, Rate.cls_currency_pair))
+        self.assertTrue(isinstance(EURUSD + “” + “”, Rate.cls_currency_pair))
