@@ -90,7 +90,7 @@ class cls_tenor:
                  start_date: datetime.date,
                  maturity_date: datetime.date,
                  label: str=None):
-        self.label = label.upper()
+        self.label = label.upper() if label is not None else label
         self.start_date = start_date
         self.maturity_date = maturity_date
 
@@ -522,7 +522,7 @@ class cls_swap_point(cls_fx_rate):
 #    return(interpolate_df(cf_early.get_discount_factor(),cf_late.get_discount_factor(),tenor_mid,linearization).get_capitalized_factor())
 
 
-class cls_fx_rate_curve():
+class cls_fx_rate_curve:
     def __init__(self, currency: cls_currency, fx_rate_list: list):
         fx_rate_list.sort(
             key=lambda fx_rate: fx_rate.tenor.start_date, reverse=False)
@@ -552,7 +552,7 @@ class cls_discount_factor_curve(cls_fx_rate_curve):
             linearization: linearization_enum) -> cls_discount_factor:
 
         if linearization == linearization_enum.log_ds_factor:
-            result = 10 ^ (
+            result = 10 ** (
                 (math.log10(df_late.mid) - math.log10(df_early.mid)) /
                 (df_late.tenor.number_of_days - df_early.tenor.number_of_days) *
                 (tenor_mid.number_of_days - df_early.tenor.number_of_days) +
@@ -604,10 +604,10 @@ class cls_discount_factor_curve(cls_fx_rate_curve):
 
             previous_df = iter_discount_factor
 
-    def get_discount_factor_by_label(
-        self, label: str) -> cls_discount_factor:
+    def get_discount_factor_by_tenorlabel(
+        self, tenorlabel: str) -> cls_discount_factor:
         for iter_discount_factor in self.fx_rate_list:
-            if iter_discount_factor.tenor.label == label.upper():
+            if iter_discount_factor.tenor.label == tenorlabel.upper():
                 return iter_discount_factor
         return None
 
@@ -639,6 +639,7 @@ class cls_swap_point_panel(cls_fx_rate_curve):
         fx_rate_list.sort(
             key=lambda fx_rate: fx_rate.tenor.maturity_date, reverse=False)
 
+        self.currency_pair = currency_pair
         self.fx_rate_list = fx_rate_list
         super().__init__(primary_ccy, fx_rate_list)
 

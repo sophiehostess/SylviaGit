@@ -53,7 +53,7 @@ class Test_cls_tenor(unittest.TestCase):
         self.assertEqual(one_month_inverse.start_date, datetime.date(2017,1,17))
         self.assertEqual(one_month_inverse.maturity_date, datetime.date(2016,12,17))
         self.assertEqual(one_month_inverse.number_of_days, -31)
-        self.assertEqual(one_month_inverse.label, "1M inverse")
+        self.assertEqual(one_month_inverse.label, "1M inverse".upper())
 
 
 class Test_cls_rate(unittest.TestCase):
