@@ -202,7 +202,7 @@ class Test_cls_swap_point_panel(unittest.TestCase):
         spot_tenor = Rate.cls_tenor(date_of_today, datetime.date(2017,6,15))
         spot_rate_usdsgd = Rate.cls_fx_spot_rate(usdsgd, spot_tenor, 1.38375)
 
-        swap_point_panel_usdsgd = Rate.cls_swap_point_panel(usdsgd, spot_rate_usdsgd, df_curve_usd, df_curve_sgd)
+        swap_point_panel_usdsgd = Rate.cls_swap_point_panel(usdsgd, spot_rate_usdsgd, df_curve_usd, df_curve_sgd,False)
         swap_point_list = swap_point_panel_usdsgd.set_swap_point_list()
 
         #swap_point_20170725 =
@@ -221,9 +221,11 @@ class Test_cls_swap_point_panel(unittest.TestCase):
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_from_list_by_tenor_label("1Y").mid * swap_point_panel_usdsgd.swap_point_factor, 9), round(-52.7500000673187,9))
 
 
-        print(swap_point_panel_usdsgd.get_swap_point_by_start_maturity(datetime.date(2017,7,25)).mid)
+        # print(swap_point_panel_usdsgd.get_swap_point_by_start_maturity(datetime.date(2017,7,25)).mid)
 
-        print("swap point 20170725 = ", swap_point_panel_usdsgd.spot_rate.mid * ((df_usd_20170725.mid/df_usd_20170615.mid) / (df_sgd_20170725.mid/df_sgd_20170615.mid) - 1 ))
+        # print("swap point 20170725 = ", swap_point_panel_usdsgd.spot_rate.mid * ((df_usd_20170725.mid/df_usd_20170615.mid) / (df_sgd_20170725.mid/df_sgd_20170615.mid) - 1 ))
+
+        self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_by_start_maturity(datetime.date(2017,7,25)).mid, 9), round(-0.0006703339836723035, 9))
 
 
 # O/N	-0.229998504268636
