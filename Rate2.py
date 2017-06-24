@@ -75,7 +75,7 @@ class cls_currency_pair:
         elif quotation_mode == quotation_mode_enum.und_base:
             self.__quotation = build_quotation(underlying.label, base.label)
         else:
-            logger.critical("parameter quotation_mode %s is invalid", quotation_mode.__repr__())
+            logger.critical("parameter quotation_mode {quotation_mode} is invalid".format(quotation_mode=quotation_mode.__repr__()))
             # ("quotation is " + self.__quotation)
 
     @property
@@ -342,7 +342,7 @@ class cls_fx_rate(cls_currency_pair_rate):
         elif quotation == self.currency_pair.get_reversed_pair().quotation:
             return self.get_reversed_fx_rate()
         else:
-            logger.critical("parameter quotation ", quotation, " is invalid ")
+            logger.critical("parameter quotation {quotation} is invalid".format(quotation=quotation))
             return None
 
     def init_by_cross_fx_rate(self, fx_rate_1, fx_rate_2):
@@ -424,7 +424,7 @@ class cls_fx_spot_rate(cls_fx_rate):
         elif quotation == self.currency_pair.get_reversed_pair().quotation:
             return self.get_spot_cls(self.get_reversed_fx_rate())
         else:
-            logger.critical("parameter quotation ", quotation, " is invalid ")
+            logger.critical("parameter quotation {quotation}is invalid.".format(quotation=quotation))
             return None
 
 
@@ -729,7 +729,7 @@ class cls_swap_point_panel(cls_fx_rate_curve):
             if swap_point_iter.tenor.label == label.upper():
                 return swap_point_iter
 
-        logger.warning("parameter label %s is not found in swap point list.", label)
+        logger.warning("parameter label {label} is not found in swap point list.".format(label=label))
         return None
 
     def set_swap_point_list(self):

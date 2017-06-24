@@ -102,6 +102,7 @@ class Test_cls_discount_factor(unittest.TestCase):
         DR1 = DF1.get_discount_rate()
         self.assertEqual(1/(DR1.mid * (datetime.date(2017,1,17) - datetime.date(2016,12,17)).days / 365 + 1), DF1.mid)
 
+
 # class Test_cls_discount_factor_curve_linear_ds_rate(unittest.TestCase):
 #     def test_init(self):
 #         usd_ccy = Rate.cls_currency("USD", 1000, 360)
@@ -122,6 +123,19 @@ class Test_cls_discount_factor(unittest.TestCase):
 #         print(1/cf1.mid)
 #
 #         self.assertEqual(df1.mid,1/cf1.mid)
+
+
+
+class Test_cls_capitalized_factor(unittest.TestCase):
+    def test_init(self):
+        EUR = Rate.cls_currency("EUR")
+        one_month = Rate.cls_tenor(datetime.date(2016, 12, 17), datetime.date(2017, 1, 17), "1M")
+        CF1 = Rate.cls_capitalized_factor(EUR, one_month, 1/0.997)
+        DF1 = CF1.get_discount_factor()
+        self.assertEqual(1 / DF1.mid, CF1.mid)
+        DR1 = CF1.get_discount_rate()
+        self.assertEqual((DR1.mid * (datetime.date(2017, 1, 17) - datetime.date(2016, 12, 17)).days / 365 + 1), CF1.mid)
+
 
 
 class Test_cls_discount_factor_curve_log_ds_factor(unittest.TestCase):
