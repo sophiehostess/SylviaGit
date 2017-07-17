@@ -79,7 +79,7 @@ class cls_currency_pair:
             # ("quotation is " + self.__quotation)
 
     @property
-    def quotation(self):
+    def quotation(self)->str:
         return self.__quotation
 
     def get_reversed_quotation_mode(self) -> quotation_mode_enum:
@@ -112,7 +112,7 @@ class cls_tenor:
         self.__number_of_days = (self.maturity_date - self.start_date).days
 
     @property
-    def number_of_days(self):
+    def number_of_days(self)->int:
         return self.__number_of_days
 
     def get_inverse_tenor(self, label: str=None):
@@ -169,7 +169,7 @@ class cls_rate:
         self.__ask = self.__mid + self.__spread
 
     @property
-    def mid(self):
+    def mid(self)->float:
         return self.__mid
 
     @mid.setter
@@ -177,7 +177,7 @@ class cls_rate:
         self.set_rate_by_mid_spread(mid, self.__spread)
 
     @property
-    def bid(self):
+    def bid(self)->float:
         return self.__bid
 
     @bid.setter
@@ -185,7 +185,7 @@ class cls_rate:
         self.set_rate_by_bid_ask(bid, self.__ask)
 
     @property
-    def ask(self):
+    def ask(self)->float:
         return self.__ask
 
     @ask.setter
@@ -193,7 +193,7 @@ class cls_rate:
         self.set_rate_by_bid_ask(self.__bid, ask)
 
     @property
-    def spread(self):
+    def spread(self)->float:
         return self.__spread
 
     @spread.setter
@@ -201,7 +201,7 @@ class cls_rate:
         self.set_rate_by_mid_spread(self.__mid, spread)
 
     @property
-    def value(self):
+    def value(self)->float:
         return self.__mid
 
     @value.setter
@@ -442,7 +442,7 @@ class cls_fx_forward_rate(cls_fx_rate):
         self.__swap_point = cls_swap_point(currency_pair, tenor, 0, 0, 0)
 
     @property
-    def spot_rate(self):
+    def spot_rate(self)->cls_fx_spot_rate:
         return self.__spot_rate
 
     @spot_rate.setter
@@ -525,7 +525,7 @@ class cls_swap_point(cls_fx_rate):
             df_base_s_m: cls_discount_factor,
             df_und_s_m: cls_discount_factor):
 
-        if self.tenor.maturity_date > spot_rate.tenor.maturity_date or self.tenor.maturity_date <= spot_rate.tenor.maturity_date :
+        if self.tenor.maturity_date > spot_rate.tenor.maturity_date or self.tenor.maturity_date < spot_rate.tenor.maturity_date :
 
             if self.currency_pair.quotation_mode == quotation_mode_enum.base_und:
                 self.set_rate_by_bid_ask(
@@ -547,11 +547,6 @@ class cls_swap_point(cls_fx_rate):
         else:
             pass
 
-    # def set_ON_swap_point_by_discount_factor(self):
-    #     pass
-    #
-    # def set_TN_swap_point_by_discount_factor(self):
-    #     pass
 
 class cls_fx_rate_curve:
     def __init__(self, currency: cls_currency, fx_rate_list: list):
@@ -576,7 +571,7 @@ class cls_discount_factor_curve(cls_fx_rate_curve):
         self.linearization = linearization
 
     @property
-    def today_date(self):
+    def today_date(self)->datetime.date:
         return self.fx_rate_list[0]
 
     def get_discount_factor_by_interpolation(
@@ -708,19 +703,19 @@ class cls_swap_point_panel(cls_fx_rate_curve):
             logger.info("swap point list is not auto set.")
 
     @property
-    def swap_point_factor(self):
+    def swap_point_factor(self)->int:
         return self.currency_pair.swap_point_factor
 
     @property
-    def spot_date(self):
+    def spot_date(self)->datetime.date:
         return self.spot_rate.tenor.maturity_date
 
     @property
-    def today_date(self):
+    def today_date(self)->datetime.date:
         return self.spot_rate.tenor.start_date
 
     @property
-    def swap_point_list(self):
+    def swap_point_list(self)->list:
         return self.fx_rate_list
 
     def get_swap_point_from_list_by_tenor_label(self, label:str) -> cls_swap_point:
@@ -762,7 +757,7 @@ class cls_swap_point_panel(cls_fx_rate_curve):
             # print("swap_point_spot_tom.mid=", swap_point_spot_tom.mid)
             # print("swap_point_spot_today.mid=", swap_point_spot_today.mid)
 
-            logger.info("swap point of tenor O/N is added to list.")
+            #logger.info("swap point of tenor O/N is added to list.")
 
             return cls_swap_point(self.currency_pair, cls_tenor(self.today_date, maturity_date, label), swap_point_spot_tom.mid - swap_point_spot_today.mid)
 
