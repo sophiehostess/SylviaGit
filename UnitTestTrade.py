@@ -26,7 +26,7 @@ class Test_cls_spot_forward_trade_1(unittest.TestCase):
                                              base_ccy_input = " USD",
                                              quotation_input = "eUR-USD ",
                                              ccy1_input = "USD",
-                                             ccy1_notional = 1200,
+                                             ccy1_notional = -1200,
                                              ccy2_input = "EUR",
                                              ccy2_notional = 1000)
 
@@ -54,7 +54,7 @@ class Test_cls_spot_forward_trade_2(unittest.TestCase):
                                              base_ccy_input = " USD",
                                              quotation_input = "USD-cny ",
                                              ccy1_input = "CNY",
-                                             ccy1_notional = 61000,
+                                             ccy1_notional = -61000,
                                              ccy2_input = "USD",
                                              ccy2_notional = 10000)
 

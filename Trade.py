@@ -56,8 +56,17 @@ class cls_fx_trade:
         return self.contract_price.currency_pair.quotation
 
     @property
+    def get_reversed_price(self)->float:
+        return 1/self.contract_price.currency_pair.mid
+
+    @property
+    def get_reversed_quotation_mode(self)->Rate.quotation_mode_enum:
+        return Rate.quotation_mode_enum.base_und if self.quotation_mode == Rate.quotation_mode_enum.und_base else Rate.quotation_mode_enum.und_base
+
+    @property
     def price(self)->float:
         return self.contract_price.mid
+
 
 
 class cls_spot_forward_trade(cls_fx_trade):
@@ -99,11 +108,11 @@ def create_fx_trade(trade_uti: str=None,
 
         if quotation == Rate.build_quotation(ccy1, ccy2):
             ccy_pair = Rate.cls_currency_pair(ccy1_, ccy2_, Rate.quotation_mode_enum.base_und)
-            fx_price = Rate.cls_fx_rate(ccy_pair,maturity, ccy2_notional/ccy1_notional)
+            fx_price = Rate.cls_fx_rate(ccy_pair,maturity, abs(ccy2_notional/ccy1_notional))
 
         elif quotation == Rate.build_quotation(ccy2, ccy1):
             ccy_pair = Rate.cls_currency_pair(ccy1_, ccy2_, Rate.quotation_mode_enum.und_base)
-            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, ccy1_notional/ccy2_notional)
+            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, abs(ccy1_notional/ccy2_notional))
 
     elif base_ccy == ccy2 :
 
@@ -112,10 +121,10 @@ def create_fx_trade(trade_uti: str=None,
 
         if quotation == Rate.build_quotation(ccy1,ccy2):
             ccy_pair = Rate.cls_currency_pair(ccy2_, ccy1_, Rate.quotation_mode_enum.und_base)
-            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, ccy2_notional/ccy1_notional)
+            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, abs(ccy2_notional/ccy1_notional))
 
         elif quotation == Rate.build_quotation(ccy2, ccy1):
             ccy_pair = Rate.cls_currency_pair(ccy2_, ccy1_, Rate.quotation_mode_enum.base_und)
-            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, ccy1_notional/ccy2_notional)
+            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, abs(ccy1_notional/ccy2_notional))
 
     return cls_spot_forward_trade(trade_uti.upper().strip(),counterparty.upper().strip(), portfolio.upper().strip(),fx_price,base_ccy_notional,und_ccy_notional)
