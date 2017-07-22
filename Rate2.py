@@ -4,31 +4,7 @@
 
 import datetime
 import math
-import logging
-
-# logging.basicConfig(#filename='DFlog.log',
-#                    format='\n %(asctime)s -%(name)s-%(levelname)s-%(module)s:%(message)s',
-#                    datefmt='%Y-%m-%d %H:%M:%S %p',
-#                    level=logging.DEBUG)
-
-
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-fh = logging.FileHandler('df_log.log') # file handler
-fh.setLevel(logging.INFO)
-
-ch = logging.StreamHandler() #stream handler
-ch.setLevel(logging.INFO)
-
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-ch.setFormatter(formatter)
-
-logger.addHandler(fh)
-logger.addHandler(ch)
-
+from log4py import logger
 
 from enum import Enum
 
@@ -44,6 +20,10 @@ class quotation_mode_enum(Enum):
 class linearization_enum(Enum):
     log_ds_factor = "log_ds_factor"
     linear_ds_rate = "linear_ds_rate"
+
+class base_or_und_enum(Enum):
+    base = "base"
+    und = "und"
 
 
 class cls_currency:
@@ -244,6 +224,8 @@ class cls_discount_factor(cls_single_currency_rate):
             logger.critical("parameter df1 tenor start data %s does not equal to current start date %s", df1.tenor.start_date,  self.tenor.start_date)
             return None
 
+    def get_unique_key(self)->str:
+        return self.currency.label + self.tenor.start_date.strftime('%Y-%m-%d') + self.tenor.maturity_date.strftime('%Y-%m-%d')
 
 class cls_capitalized_factor(cls_single_currency_rate):
     def get_discount_factor(self) -> cls_discount_factor:

@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-import math
-import logging
+from log4py import logger
 import Rate2 as Rate
 from enum import Enum
 
@@ -126,5 +125,8 @@ def create_fx_trade(trade_uti: str=None,
         elif quotation == Rate.build_quotation(ccy2, ccy1):
             ccy_pair = Rate.cls_currency_pair(ccy2_, ccy1_, Rate.quotation_mode_enum.base_und)
             fx_price = Rate.cls_fx_rate(ccy_pair, maturity, abs(ccy1_notional/ccy2_notional))
+
+    logger.info(
+        "contract price quotation_mode is {quotation_mode}. ".format(quotation_mode=str(ccy_pair.quotation_mode)))
 
     return cls_spot_forward_trade(trade_uti.upper().strip(),counterparty.upper().strip(), portfolio.upper().strip(),fx_price,base_ccy_notional,und_ccy_notional)
