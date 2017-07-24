@@ -67,7 +67,7 @@ class cls_fx_trade_acc_pnl(cls_fx_trade_pnl):
 
         super().__init__(trade,market_forward_rate, pnl_ccy, pnl_ccy_df_t_m, pnl_cal_date)
         self.acc_pnl = 0
-        self.refresh_pnl()
+        self.refresh_acc_pnl()
 
     def __get_accounting_pnl_value(self)->float:
 
@@ -90,9 +90,12 @@ class cls_fx_trade_acc_pnl(cls_fx_trade_pnl):
         return acc_pnl
 
 
-    def refresh_pnl(self):
+    def refresh_acc_pnl(self):
         self.pnl_value = self.__get_accounting_pnl_value()
         logger.info("Accounting PnL is {acc_pnl}. ".format(acc_pnl=str(self.acc_pnl)))
+
+    def refresh_pnl(self):
+        self.refresh_acc_pnl()
 
 class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
     def __init__(self,
@@ -104,7 +107,8 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
                  ):
 
         super().__init__(trade,market_forward_rate, pnl_ccy, pnl_ccy_df_t_m, pnl_cal_date)
-        self.refresh_pnl()
+        self.eco_pnl = 0
+        self.refresh_eco_pnl()
 
     def __get_economic_pnl_value(self, acc_pnl:float)->float:
         if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base:
@@ -118,13 +122,14 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
 
         return eco_pnl
 
-    def refresh_pnl(self):
-        super().refresh_pnl()
+    def refresh_eco_pnl(self):
         self.pnl_value = self.__get_economic_pnl_value(self.acc_pnl)
         self.eco_pnl = self.pnl_value
         logger.info("Economic PnL is {eco_pnl}. ".format(eco_pnl=str(self.eco_pnl)))
 
-
+    def refresh_pnl(self):
+        super().refresh_acc_pnl()
+        self.refresh_eco_pnl()
 
 class cls_nsp_pnl():
     pass
