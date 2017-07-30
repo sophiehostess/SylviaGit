@@ -31,11 +31,11 @@ class cls_fx_trade:
         self.und_ccy_notional = und_ccy_notional
 
     @property
-    def base_ccy(self)->str:
+    def base_ccy_label(self)->str:
         return self.contract_price.currency_pair.base.label
 
     @property
-    def und_ccy(self)->str:
+    def und_ccy_label(self)->str:
         return self.contract_price.currency_pair.underlying.label
 
     @property

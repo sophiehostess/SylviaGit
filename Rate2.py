@@ -479,6 +479,16 @@ class cls_fx_forward_rate(cls_fx_rate):
         self.swap_point = swap_point_value
 
 
+class cls_fx_discounted_spot_rate(cls_fx_forward_rate):
+    def __init__(self,
+                 currency_pair: cls_currency_pair,
+                 tenor: cls_tenor,
+                 mid: float=0,
+                 bid: float=0,
+                 ask: float=0):
+        super().__init__(currency_pair, tenor, mid, bid, ask)
+        self.tenor.label = "TDY"
+
 class cls_swap_point(cls_fx_rate):
     def __init__(self,
                  currency_pair: cls_currency_pair,
