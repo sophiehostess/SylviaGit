@@ -92,6 +92,7 @@ class Test_cls_single_currency_rate(unittest.TestCase):
 
 
 
+
 class Test_cls_discount_factor(unittest.TestCase):
     def test_init(self):
         EUR= Rate.cls_currency("EUR")
@@ -240,6 +241,11 @@ class Test_cls_swap_point_panel(unittest.TestCase):
         # print("swap point 20170725 = ", swap_point_panel_usdsgd.spot_rate.mid * ((df_usd_20170725.mid/df_usd_20170615.mid) / (df_sgd_20170725.mid/df_sgd_20170615.mid) - 1 ))
 
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_by_start_maturity(datetime.date(2017,7,25)).mid, 9), round(-0.0006703339836723035, 9))
+
+        print(df_sgd_ON.unique_key)
+
+        for iter_swap_point in swap_point_list:
+            print(iter_swap_point.unique_key)
 
 
 # O/N	-0.229998504268636

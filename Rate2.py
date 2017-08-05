@@ -197,7 +197,17 @@ class cls_single_currency_rate(cls_rate):
                  ask: float=0):
         self.currency = currency
         super().__init__(tenor, mid, bid, ask)
+        self.__unique_key = self.__get_unique_key()
 
+    def __get_unique_key(self)->str:
+        return (self.__class__.__name__.replace("cls_","") + "#" +
+                self.currency.label + "#" +
+                self.tenor.start_date.strftime('%Y-%m-%d') + "#" +
+                self.tenor.maturity_date.strftime('%Y-%m-%d'))
+
+    @property
+    def unique_key(self):
+        return self.__unique_key
 
 class cls_discount_factor(cls_single_currency_rate):
     def get_capitalized_factor(self):
@@ -223,9 +233,6 @@ class cls_discount_factor(cls_single_currency_rate):
         else:
             logger.critical("parameter df1 tenor start data %s does not equal to current start date %s", df1.tenor.start_date,  self.tenor.start_date)
             return None
-
-    def get_unique_key(self)->str:
-        return self.currency.label + self.tenor.start_date.strftime('%Y-%m-%d') + self.tenor.maturity_date.strftime('%Y-%m-%d')
 
 class cls_capitalized_factor(cls_single_currency_rate):
     def get_discount_factor(self) -> cls_discount_factor:
@@ -289,9 +296,11 @@ class cls_discount_rate(cls_single_currency_rate):
                           self.tenor.maturity_date), market_quote_value)
 
         if self.tenor.maturity_date == discount_factor_today_spot.tenor.maturity_date:
+            # T/N
             pass
 
         if self.tenor.maturity_date < discount_factor_today_spot.tenor.maturity_date:
+            # O/N
             pass
 
 
@@ -304,6 +313,18 @@ class cls_currency_pair_rate(cls_rate):
                  ask: float=0):
         self.currency_pair = currency_pair
         super().__init__(tenor, mid, bid, ask)
+        self.__unique_key = self.__get_unique_key()
+
+    def __get_unique_key(self)->str:
+        return (self.__class__.__name__.replace("cls_","") + "#" +
+                self.currency_pair.quotation + "#" +
+                self.tenor.start_date.strftime('%Y-%m-%d') + "#" +
+                self.tenor.maturity_date.strftime('%Y-%m-%d'))
+
+    @property
+    def unique_key(self):
+        return self.__unique_key
+
 
 
 class cls_fx_rate(cls_currency_pair_rate):
