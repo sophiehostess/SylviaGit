@@ -79,6 +79,40 @@ class Test_cls_rate(unittest.TestCase):
         self.assertEqual(round(RATE3.spread,5),150)
 
 
+class Test_cls_on_funding_rate_panel(unittest.TestCase):
+    def test_init(self):
+        USD= Rate.cls_currency("USD")
+
+        ON_RATE1 = Rate.cls_overnight_funding_rate(USD, Rate.cls_tenor(datetime.date(2017,10,1), datetime.date(2017,10,2), ""),0.001)
+        ON_RATE2 = Rate.cls_overnight_funding_rate(USD, Rate.cls_tenor(datetime.date(2017,10,2), datetime.date(2017,10,4), ""),0.002)
+        ON_RATE3 = Rate.cls_overnight_funding_rate(USD, Rate.cls_tenor(datetime.date(2017,10,4), datetime.date(2017,10,9), ""),0.003)
+
+        on_list = [ON_RATE1, ON_RATE2, ON_RATE3]
+
+        ON_RATE_DICT = Rate.cls_on_funding_rate_panel(USD,on_list)
+
+        self.assertEqual(ON_RATE_DICT.list_start_date, ON_RATE1.tenor.start_date)
+        self.assertEqual(ON_RATE_DICT.list_end_date, ON_RATE3.tenor.maturity_date)
+
+        ON_RATE_LIST_1 = ON_RATE_DICT.get_on_rate_dict_by_start_end_date(ON_RATE1.tenor.start_date,ON_RATE3.tenor.maturity_date)
+        self.assertEqual(ON_RATE_LIST_1[ON_RATE1.tenor.start_date].tenor.maturity_date, ON_RATE1.tenor.maturity_date)
+        self.assertEqual(ON_RATE_LIST_1[ON_RATE1.tenor.start_date].mid, ON_RATE1.mid)
+
+        self.assertEqual(ON_RATE_LIST_1[ON_RATE2.tenor.start_date].tenor.maturity_date, ON_RATE2.tenor.maturity_date)
+        self.assertEqual(ON_RATE_LIST_1[ON_RATE2.tenor.start_date].mid, ON_RATE2.mid)
+
+        self.assertEqual(ON_RATE_LIST_1[ON_RATE3.tenor.start_date].tenor.maturity_date, ON_RATE3.tenor.maturity_date)
+        self.assertEqual(ON_RATE_LIST_1[ON_RATE3.tenor.start_date].mid, ON_RATE3.mid)
+
+        ON_RATE_LIST_2 = ON_RATE_DICT.get_on_rate_dict_by_start_end_date(ON_RATE1.tenor.start_date, datetime.date(2017, 10, 8))
+        self.assertEqual(ON_RATE_LIST_2[ON_RATE1.tenor.start_date].tenor.maturity_date, ON_RATE1.tenor.maturity_date)
+        self.assertEqual(ON_RATE_LIST_2[ON_RATE1.tenor.start_date].mid, ON_RATE1.mid)
+
+        self.assertEqual(ON_RATE_LIST_2[ON_RATE2.tenor.start_date].tenor.maturity_date, ON_RATE2.tenor.maturity_date)
+        self.assertEqual(ON_RATE_LIST_2[ON_RATE2.tenor.start_date].mid, ON_RATE2.mid)
+
+        self.assertEqual(ON_RATE_LIST_2[ON_RATE3.tenor.start_date].tenor.maturity_date, datetime.date(2017, 10, 8))
+        self.assertEqual(ON_RATE_LIST_2[ON_RATE3.tenor.start_date].mid, ON_RATE3.mid)
 
 class Test_cls_single_currency_rate(unittest.TestCase):
     def test_init(self):

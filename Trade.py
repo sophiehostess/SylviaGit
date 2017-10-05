@@ -39,7 +39,7 @@ class cls_fx_trade:
         return self.contract_price.currency_pair.underlying.label
 
     @property
-    def maturity_date(self)->str:
+    def maturity_date(self)->datetime.date:
         return self.contract_price.tenor.maturity_date
 
     @property
@@ -130,3 +130,13 @@ def create_fx_trade(trade_uti: str=None,
         "contract price quotation_mode is {quotation_mode}. ".format(quotation_mode=str(ccy_pair.quotation_mode)))
 
     return cls_spot_forward_trade(trade_uti.upper().strip(),counterparty.upper().strip(), portfolio.upper().strip(),fx_price,base_ccy_notional,und_ccy_notional)
+
+
+class simple_cash_flow():
+    def __init__(self,
+                 amount:float,
+                 payment_date:datetime.date,
+                 currency:Rate.cls_currency,
+                 ):
+        self.amount = amount
+        self.payment_date = payment_date

@@ -35,7 +35,6 @@ class Test_cls_fx_trade_eco_pnl1(unittest.TestCase):
         acc_pnl = PnL.cls_fx_trade_acc_pnl(test_trade,
                                            forward_rate,
                                            test_trade.contract_price.currency_pair.base,
-                                           Rate.cls_discount_factor(test_trade.contract_price.currency_pair.base, test_trade.contract_price.tenor,0.998),
                                            datetime.date(2017, 1, 17)
                                            )
 
@@ -77,8 +76,6 @@ class Test_cls_fx_trade_eco_pnl2(unittest.TestCase):
         acc_pnl = PnL.cls_fx_trade_acc_pnl(test_trade,
                                            forward_rate,
                                            test_trade.contract_price.currency_pair.underlying,
-                                           Rate.cls_discount_factor(test_trade.contract_price.currency_pair.underlying,
-                                                                    test_trade.contract_price.tenor, 0.997),
                                            datetime.date(2017, 1, 17)
                                            )
 

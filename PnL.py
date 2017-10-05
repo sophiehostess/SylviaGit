@@ -30,20 +30,20 @@ class cls_fx_trade_pnl(cls_pnl):
                  trade:Trade.cls_fx_trade,
                  market_forward_rate:Rate.cls_fx_forward_rate,
                  pnl_ccy:Rate.cls_currency,
-                 pnl_ccy_df_t_m: Rate.cls_discount_factor,
                  pnl_cal_date:datetime.date
                  ):
 
         if pnl_ccy.label == trade.base_ccy_label :
             self.pnl_presented_in_base_or_und = Rate.base_or_und_enum.base
-            self.base_ccy_df_t_m = pnl_ccy_df_t_m
         elif pnl_ccy.label == trade.und_ccy_label :
             self.pnl_presented_in_base_or_und = Rate.base_or_und_enum.und
-            self.und_ccy_df_t_m = pnl_ccy_df_t_m
 
         self.trade = trade
 
-        self.market_forward_rate = market_forward_rate.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+        if market_forward_rate is not None:
+            self.market_forward_rate = market_forward_rate.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+        else:
+            self.market_forward_rate = None
 
         self.pnl_cal_date = pnl_cal_date
 
@@ -62,16 +62,24 @@ class cls_fx_trade_pnl(cls_pnl):
         return self.trade.und_ccy_label
 
 
+class cls_cost_of_funding_of_single_cash_flow():
+    def __init__(self,
+                 trade:Trade.cls_fx_trade,
+                 pnl_ccy:Rate.cls_currency,
+                 pnl_cal_date:datetime.date
+                 ):
+        pass
+
+
 class cls_fx_trade_acc_pnl(cls_fx_trade_pnl):
     def __init__(self,
                  trade:Trade.cls_fx_trade,
                  market_forward_rate:Rate.cls_fx_forward_rate,
                  pnl_ccy:Rate.cls_currency,
-                 pnl_ccy_df_t_m: Rate.cls_discount_factor,
                  pnl_cal_date:datetime.date
                  ):
 
-        super().__init__(trade,market_forward_rate, pnl_ccy, pnl_ccy_df_t_m, pnl_cal_date)
+        super().__init__(trade,market_forward_rate, pnl_ccy, pnl_cal_date)
         self.acc_pnl = 0
         self.refresh_acc_pnl()
 
@@ -111,7 +119,13 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
                  pnl_cal_date:datetime.date
                  ):
 
-        super().__init__(trade,market_forward_rate, pnl_ccy, pnl_ccy_df_t_m, pnl_cal_date)
+        super().__init__(trade,market_forward_rate, pnl_ccy, pnl_cal_date)
+
+        if pnl_ccy.label == trade.base_ccy_label :
+            self.base_ccy_df_t_m = pnl_ccy_df_t_m
+        elif pnl_ccy.label == trade.und_ccy_label :
+            self.und_ccy_df_t_m = pnl_ccy_df_t_m
+
         self.eco_pnl = 0
         self.refresh_eco_pnl()
 
@@ -158,9 +172,101 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
         return self.eco_pnl
 
 
-class cls_nsp_pnl():
-    pass
+class cls_nsp_acc_pnl(cls_fx_trade_pnl):
+    def __init__(self,
+                 trade:Trade.cls_fx_trade,
+                 market_today_rate:Rate.cls_fx_forward_rate,
+                 pnl_ccy:Rate.cls_currency,
+                 pnl_cal_date:datetime.date
+                 ):
+
+        super().__init__(trade, None, pnl_ccy, pnl_cal_date)
+
+        self.market_today_rate = market_today_rate.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+
+        self.acc_pnl = 0
+        self.refresh_acc_pnl()
+
+    def __get_accounting_pnl_value(self)->float:
+
+        #convert all rates to base_und quotation mode
+        contract_price = self.trade.contract_price.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+
+        if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base :
+            und_ccy_notional = self.trade.und_ccy_notional
+            acc_pnl = und_ccy_notional * (1/self.market_today_rate.mid - 1/contract_price.mid)
+
+        elif self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.und :
+            base_ccy_notional = self.trade.base_ccy_notional
+            acc_pnl = base_ccy_notional * (self.market_today_rate.mid - contract_price.mid)
+
+        else:
+            acc_pnl = 0
+
+        self.acc_pnl = acc_pnl
+        return acc_pnl
+
+    def refresh_acc_pnl(self):
+        self.pnl_value = self.__get_accounting_pnl_value()
+        logger.info("Accounting PnL is {acc_pnl}. ".format(acc_pnl=str(self.acc_pnl)))
+
+class cls_nsp_eco_pnl(cls_nsp_acc_pnl):
+    def __init__(self,
+                 trade:Trade.cls_fx_trade,
+                 market_today_rate:Rate.cls_fx_forward_rate,
+                 pnl_ccy:Rate.cls_currency,
+                 pnl_cal_date:datetime.date,
+                 pnl_ccy_on_funding_rate_panel:Rate.cls_on_funding_rate_panel,
+                 counter_ccy_on_funding_rate_panel:Rate.cls_on_funding_rate_panel
+                 ):
+        super().__init__(trade, market_today_rate, pnl_ccy, pnl_cal_date)
+
+        self.eco_pnl = 0
+
+        if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base:
+            pnl_ccy_notional = self.trade.base_ccy_notional
+            counter_ccy_notional = self.trade.und_ccy_notional
+        else:
+            pnl_ccy_notional = self.trade.und_ccy_notional
+            counter_ccy_notional = self.trade.base_ccy_notional
+
+        self.__pnl_ccy_financing = self.__get_single_cash_flow_financing(self.pnl_ccy,
+                                                                       pnl_ccy_notional,
+                                                                       self.trade.maturity_date,
+                                                                       self.pnl_cal_date,
+                                                                       pnl_ccy_on_funding_rate_panel)
+
+        self.__counter_ccy_financing = self.__get_single_cash_flow_financing(self.trade.contract_price.currency_pair.get_another_currency(self.pnl_ccy),
+                                                                           pnl_ccy_notional,
+                                                                           self.trade.maturity_date,
+                                                                           self.pnl_cal_date,
+                                                                           counter_ccy_on_funding_rate_panel)
+
+        if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base :
+            self.__counter_ccy_financing_in_pnl_ccy = self.__counter_ccy_financing * (1/self.market_today_rate.mid)
+
+        elif self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.und :
+            self.__counter_ccy_financing_in_pnl_ccy = self.__counter_ccy_financing * self.market_today_rate.mid
+
+        else:
+            self.__counter_ccy_financing_in_pnl_ccy = 0
 
 
-class cls_cof():
-    pass
+    def __get_single_cash_flow_financing(self,
+                                         currency:Rate.cls_currency,
+                                         notional:float,
+                                         start_date:datetime.date,
+                                         end_date:datetime.date,
+                                         on_funding_rate_panel:Rate.cls_on_funding_rate_panel)->float:
+
+        on_funding_rate_dict =  on_funding_rate_panel.get_on_rate_dict_by_start_end_date(start_date, end_date)
+        result = 0
+        for on_funding_rate_iter in on_funding_rate_dict.items():
+            s = notional *  on_funding_rate_iter.mid * on_funding_rate_iter.tenor.number_of_days / currency.number_of_days_1year
+            result = result + s
+
+        return result
+
+    def refresh_eco_pnl(self):
+        self.pnl_value = self.acc_pnl + self.__pnl_ccy_financing + self.__counter_ccy_financing_in_pnl_ccy
+        logger.info("Economic PnL is {eco_pnl}. ".format(eco_pnl=str(self.eco_pnl)))

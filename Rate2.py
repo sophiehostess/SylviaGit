@@ -79,6 +79,11 @@ class cls_currency_pair:
                                  self.swap_point_factor,
                                  self.day_shift)
 
+    def get_another_currency(self,ccy1:cls_currency)->cls_currency:
+        if ccy1.label == self.base.label:
+            return self.underlying
+        elif ccy1.label == self.underlying.label:
+            return self.base
 
 class cls_tenor:
     def __init__(self,
@@ -303,6 +308,53 @@ class cls_discount_rate(cls_single_currency_rate):
             # O/N
             pass
 
+class cls_overnight_funding_rate(cls_single_currency_rate):
+    pass
+
+class cls_on_funding_rate_panel():
+    def __init__(
+            self,
+            currency: cls_currency,
+            on_rate_list: list):
+        if on_rate_list is not None:
+            on_rate_list.sort(
+                key=lambda on_rate: on_rate.tenor.start_date, reverse=False)
+            self.on_rate_list = on_rate_list
+        else:
+            self.on_rate_list = []
+
+        self.currency = currency
+
+        self.__list_start_date = self.on_rate_list[0].tenor.start_date
+        self.__list_end_date = self.on_rate_list[-1].tenor.maturity_date
+
+    @property
+    def list_start_date(self)->datetime.date:
+        return self.__list_start_date
+
+    @property
+    def list_end_date(self)->datetime.date:
+        return self.__list_end_date
+
+    def get_on_rate_dict_by_start_end_date(
+            self, start_date:datetime.date, end_date:datetime.date)->dict:
+
+        result_dict = {}
+        for on_rate_iter in self.on_rate_list:
+            if on_rate_iter.tenor.start_date >= start_date and on_rate_iter.tenor.maturity_date <= end_date :
+                result_dict[on_rate_iter.tenor.start_date] = on_rate_iter
+                #print("add to dict , key is " + on_rate_iter.tenor.start_date.strftime('%Y-%m-%d') + " maturity is " + on_rate_iter.tenor.maturity_date.strftime('%Y-%m-%d'))
+            elif on_rate_iter.tenor.start_date >= start_date and on_rate_iter.tenor.maturity_date > end_date :
+                result_dict[on_rate_iter.tenor.start_date] = cls_overnight_funding_rate(self.currency,
+                                                                                        cls_tenor(on_rate_iter.tenor.start_date, end_date),
+                                                                                        on_rate_iter.mid,
+                                                                                        on_rate_iter.bid,
+                                                                                        on_rate_iter.ask
+                                                                                        )
+                #print("add to dict , key is " + on_rate_iter.tenor.start_date.strftime('%Y-%m-%d') + " maturity is " + end_date.strftime('%Y-%m-%d'))
+
+                break
+        return result_dict
 
 class cls_currency_pair_rate(cls_rate):
     def __init__(self,
