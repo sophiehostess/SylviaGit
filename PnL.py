@@ -230,18 +230,36 @@ class cls_nsp_eco_pnl(cls_nsp_acc_pnl):
             pnl_ccy_notional = self.trade.und_ccy_notional
             counter_ccy_notional = self.trade.base_ccy_notional
 
-        self.__pnl_ccy_financing = self.__get_single_cash_flow_financing(self.pnl_ccy,
-                                                                       pnl_ccy_notional,
-                                                                       self.trade.maturity_date,
-                                                                       self.pnl_cal_date,
-                                                                       pnl_ccy_on_funding_rate_panel)
+        self.__pnl_ccy_financing = self.__get_single_cash_flow_financing(self.pnl_ccy.number_of_days_1year,
+                                                                         pnl_ccy_notional,
+                                                                         self.trade.maturity_date,
+                                                                         self.pnl_cal_date,
+                                                                         pnl_ccy_on_funding_rate_panel)
 
-        self.__counter_ccy_financing = self.__get_single_cash_flow_financing(self.trade.contract_price.currency_pair.get_another_currency(self.pnl_ccy),
-                                                                           pnl_ccy_notional,
-                                                                           self.trade.maturity_date,
-                                                                           self.pnl_cal_date,
-                                                                           counter_ccy_on_funding_rate_panel)
+        self.__counter_ccy_financing = self.__get_single_cash_flow_financing(self.trade.contract_price.currency_pair.get_another_currency(self.pnl_ccy).number_of_days_1year,
+                                                                             counter_ccy_notional,
+                                                                             self.trade.maturity_date,
+                                                                             self.pnl_cal_date,
+                                                                             counter_ccy_on_funding_rate_panel)
 
+        self.refresh_eco_pnl()
+
+    def __get_single_cash_flow_financing(self,
+                                         number_of_days_1year:int,
+                                         notional:float,
+                                         start_date:datetime.date,
+                                         end_date:datetime.date,
+                                         on_funding_rate_panel:Rate.cls_on_funding_rate_panel)->float:
+
+        on_funding_rate_dict = on_funding_rate_panel.get_on_rate_dict_by_start_end_date(start_date, end_date)
+        result = 0
+        for start_date_iter, on_funding_rate_iter in on_funding_rate_dict.items():
+            financing_iter = notional * on_funding_rate_iter.mid * on_funding_rate_iter.tenor.number_of_days / number_of_days_1year
+            result = result + financing_iter
+
+        return result
+
+    def __get_economic_pnl_value(self) -> float:
         if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base :
             self.__counter_ccy_financing_in_pnl_ccy = self.__counter_ccy_financing * (1/self.market_today_rate.mid)
 
@@ -251,22 +269,21 @@ class cls_nsp_eco_pnl(cls_nsp_acc_pnl):
         else:
             self.__counter_ccy_financing_in_pnl_ccy = 0
 
-
-    def __get_single_cash_flow_financing(self,
-                                         currency:Rate.cls_currency,
-                                         notional:float,
-                                         start_date:datetime.date,
-                                         end_date:datetime.date,
-                                         on_funding_rate_panel:Rate.cls_on_funding_rate_panel)->float:
-
-        on_funding_rate_dict =  on_funding_rate_panel.get_on_rate_dict_by_start_end_date(start_date, end_date)
-        result = 0
-        for on_funding_rate_iter in on_funding_rate_dict.items():
-            s = notional *  on_funding_rate_iter.mid * on_funding_rate_iter.tenor.number_of_days / currency.number_of_days_1year
-            result = result + s
-
-        return result
+        eco_pnl = self.acc_pnl + self.__pnl_ccy_financing + self.__counter_ccy_financing_in_pnl_ccy
+        self.eco_pnl = eco_pnl
+        return eco_pnl
 
     def refresh_eco_pnl(self):
-        self.pnl_value = self.acc_pnl + self.__pnl_ccy_financing + self.__counter_ccy_financing_in_pnl_ccy
+        self.pnl_value = self.__get_economic_pnl_value()
+
         logger.info("Economic PnL is {eco_pnl}. ".format(eco_pnl=str(self.eco_pnl)))
+
+
+    @property
+    def get_pnl_ccy_financing(self)->float:
+        return self.__pnl_ccy_financing
+
+
+    @property
+    def get_counter_ccy_financing(self)->float:
+        return self.__counter_ccy_financing

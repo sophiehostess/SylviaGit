@@ -79,6 +79,16 @@ class Test_cls_rate(unittest.TestCase):
         self.assertEqual(round(RATE3.spread,5),150)
 
 
+class Test_cls_single_currency_rate(unittest.TestCase):
+    def test_init(self):
+        EUR= Rate.cls_currency("EUR")
+        one_month=Rate.cls_tenor(datetime.date(2016,12,17),datetime.date(2017,1,17), "1M")
+        RATE1 = Rate.cls_single_currency_rate(EUR,one_month,1.3)
+        self.assertEqual(RATE1.mid,1.3)
+        self.assertEqual(RATE1.bid,1.3)
+        self.assertEqual(RATE1.ask,1.3)
+        self.assertEqual(RATE1.tenor.maturity_date,datetime.date(2017,1,17))
+
 class Test_cls_on_funding_rate_panel(unittest.TestCase):
     def test_init(self):
         USD= Rate.cls_currency("USD")
@@ -114,15 +124,7 @@ class Test_cls_on_funding_rate_panel(unittest.TestCase):
         self.assertEqual(ON_RATE_LIST_2[ON_RATE3.tenor.start_date].tenor.maturity_date, datetime.date(2017, 10, 8))
         self.assertEqual(ON_RATE_LIST_2[ON_RATE3.tenor.start_date].mid, ON_RATE3.mid)
 
-class Test_cls_single_currency_rate(unittest.TestCase):
-    def test_init(self):
-        EUR= Rate.cls_currency("EUR")
-        one_month=Rate.cls_tenor(datetime.date(2016,12,17),datetime.date(2017,1,17), "1M")
-        RATE1 = Rate.cls_single_currency_rate(EUR,one_month,1.3)
-        self.assertEqual(RATE1.mid,1.3)
-        self.assertEqual(RATE1.bid,1.3)
-        self.assertEqual(RATE1.ask,1.3)
-        self.assertEqual(RATE1.tenor.maturity_date,datetime.date(2017,1,17))
+
 
 
 

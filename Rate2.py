@@ -344,6 +344,23 @@ class cls_on_funding_rate_panel():
             if on_rate_iter.tenor.start_date >= start_date and on_rate_iter.tenor.maturity_date <= end_date :
                 result_dict[on_rate_iter.tenor.start_date] = on_rate_iter
                 #print("add to dict , key is " + on_rate_iter.tenor.start_date.strftime('%Y-%m-%d') + " maturity is " + on_rate_iter.tenor.maturity_date.strftime('%Y-%m-%d'))
+
+            if on_rate_iter.tenor.start_date < start_date and on_rate_iter.tenor.maturity_date <= end_date and on_rate_iter.tenor.maturity_date > start_date:
+                result_dict[on_rate_iter.tenor.start_date] = cls_overnight_funding_rate(self.currency,
+                                                                                        cls_tenor(start_date, on_rate_iter.tenor.maturity_date),
+                                                                                        on_rate_iter.mid,
+                                                                                        on_rate_iter.bid,
+                                                                                        on_rate_iter.ask
+                                                                                        )
+
+            if on_rate_iter.tenor.start_date < start_date and on_rate_iter.tenor.maturity_date > end_date:
+                result_dict[on_rate_iter.tenor.start_date] = cls_overnight_funding_rate(self.currency,
+                                                                                        cls_tenor(start_date, end_date),
+                                                                                        on_rate_iter.mid,
+                                                                                        on_rate_iter.bid,
+                                                                                        on_rate_iter.ask
+                                                                                        )
+                break
             elif on_rate_iter.tenor.start_date >= start_date and on_rate_iter.tenor.maturity_date > end_date :
                 result_dict[on_rate_iter.tenor.start_date] = cls_overnight_funding_rate(self.currency,
                                                                                         cls_tenor(on_rate_iter.tenor.start_date, end_date),
