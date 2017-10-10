@@ -62,13 +62,6 @@ class cls_fx_trade_pnl(cls_pnl):
         return self.trade.und_ccy_label
 
 
-class cls_cost_of_funding_of_single_cash_flow():
-    def __init__(self,
-                 trade:Trade.cls_fx_trade,
-                 pnl_ccy:Rate.cls_currency,
-                 pnl_cal_date:datetime.date
-                 ):
-        pass
 
 
 class cls_fx_trade_acc_pnl(cls_fx_trade_pnl):

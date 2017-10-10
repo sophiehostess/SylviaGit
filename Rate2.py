@@ -803,7 +803,7 @@ class cls_swap_point_panel(cls_fx_rate_curve):
     def get_swap_point_from_list_by_tenor_label(self, label:str) -> cls_swap_point:
 
         for swap_point_iter in self.swap_point_list:
-            if swap_point_iter.tenor.label == label.upper():
+            if swap_point_iter.tenor.label == label.upper().strip():
                 return swap_point_iter
 
         logger.warning("parameter label {label} is not found in swap point list.".format(label=label))

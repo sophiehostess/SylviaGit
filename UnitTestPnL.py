@@ -19,16 +19,16 @@ class Test_cls_fx_trade_eco_pnl1(unittest.TestCase):
     def test_init(self):
 
         test_trade = Trade.create_fx_trade(trade_uti = "TEST12345",
-                                             counterparty = "ABC123",
-                                             portfolio = "PORT789",
-                                             trade_date = datetime.date(2017,1,17),
-                                             maturity_date = datetime.date(2017,5,11),
-                                             base_ccy_input = " USD",
-                                             quotation_input = "eUR-USD ",
-                                             ccy1_input = "USD",
-                                             ccy1_notional = -1200,
-                                             ccy2_input = "EUR",
-                                             ccy2_notional = 1000)
+                                           counterparty = "ABC123",
+                                           portfolio = "PORT789",
+                                           trade_date = datetime.date(2017,1,17),
+                                           maturity_date = datetime.date(2017,5,11),
+                                           base_ccy_input = " USD",
+                                           quotation_input = "eUR-USD ",
+                                           ccy1_input = "USD",
+                                           ccy1_notional = -1200,
+                                           ccy2_input = "EUR",
+                                           ccy2_notional = 1000)
 
         forward_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair, test_trade.contract_price.tenor,1.5)
 
@@ -112,22 +112,9 @@ class Test_cls_nsp_acc_pnl(unittest.TestCase):
         acc_pnl = PnL.cls_nsp_acc_pnl(test_trade,
                                       today_rate,
                                       test_trade.contract_price.currency_pair.base,
-                                      datetime.date(2017, 5, 10)
-                                     )
+                                      datetime.date(2017, 5, 10))
 
         self.assertEqual(round(acc_pnl.acc_pnl, 7), round(1000 *(1.5 - 1.2), 7))
-
-#        eco_pnl = PnL.cls_fx_trade_eco_pnl(test_trade,
-#                                           forward_rate,
-#                                           test_trade.contract_price.currency_pair.underlying,
-#                                           Rate.cls_discount_factor(test_trade.contract_price.currency_pair.underlying,
-#                                                                    test_trade.contract_price.tenor, 0.997),
-#                                           datetime.date(2017, 1, 17)
-#                                           )
-
-        #self.assertEqual(round(eco_pnl.eco_pnl, 7), round(-1200 * (1/1.5 - 1/1.2), 7) * 0.997)
-
-
 
 
 class Test_cls_nsp_eco_pnl(unittest.TestCase):
