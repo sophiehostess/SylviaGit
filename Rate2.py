@@ -118,10 +118,10 @@ class cls_rate:
                  bid: float=0,
                  ask: float=0):
         self.tenor = tenor
-        self.__mid = 0
-        self.__bid = 0
-        self.__ask = 0
-        self.__spread = 0
+        self.__mid = 0.0
+        self.__bid = 0.0
+        self.__ask = 0.0
+        self.__spread = 0.0
 
         if mid == 0 and bid != 0 and ask != 0:
             self.set_rate_by_bid_ask(bid, ask)
@@ -563,7 +563,7 @@ class cls_fx_forward_rate(cls_fx_rate):
                 underlying_ccy_df_s_m.mid / base_ccy_df_s_m.mid - 1)
 
     def set_forward_rate_by_spot_and_swp(self,
-                                         spot_rate_value: cls_rate,
+                                         spot_rate_value: cls_fx_spot_rate,
                                          swap_point_value: cls_rate):
         self.spot_rate = spot_rate_value
         self.swap_point = swap_point_value
@@ -718,7 +718,7 @@ class cls_discount_factor_curve(cls_fx_rate_curve):
 
                 previous_df = discount_factor_iter
 
-    def get_discount_factor_by_start_maturity(self, start_date: datetime, maturity_date: datetime) -> cls_discount_factor:
+    def get_discount_factor_by_start_maturity(self, start_date: datetime.date, maturity_date: datetime.date) -> cls_discount_factor:
 
         # print("get_discount_factor_by_tenor ", "tenor_input.start_date is ", tenor_input.start_date, "tenor_input.maturity_date is ", tenor_input.maturity_date)
 

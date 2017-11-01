@@ -13,7 +13,7 @@ class cls_pnl():
                  pnl_cal_date:datetime.date
                  ):
         self.pnl_ccy = pnl_ccy
-        self.__pnl_value = 0
+        self.__pnl_value = 0.0
         self.pnl_cal_date = pnl_cal_date
 
     @property
@@ -73,7 +73,7 @@ class cls_fx_trade_acc_pnl(cls_fx_trade_pnl):
                  ):
 
         super().__init__(trade,market_forward_rate, pnl_ccy, pnl_cal_date)
-        self.acc_pnl = 0
+        self.acc_pnl = 0.0
         self.refresh_acc_pnl()
 
     def __get_accounting_pnl_value(self)->float:
@@ -90,7 +90,7 @@ class cls_fx_trade_acc_pnl(cls_fx_trade_pnl):
             acc_pnl = base_ccy_notional * (self.market_forward_rate.mid - contract_price.mid)
 
         else:
-            acc_pnl = 0
+            acc_pnl = 0.0
 
         self.acc_pnl = acc_pnl
         return acc_pnl
@@ -119,7 +119,7 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
         elif pnl_ccy.label == trade.und_ccy_label :
             self.und_ccy_df_t_m = pnl_ccy_df_t_m
 
-        self.eco_pnl = 0
+        self.eco_pnl = 0.0
         self.refresh_eco_pnl()
 
     def __get_economic_pnl_value(self, acc_pnl:float)->float:
@@ -130,7 +130,7 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
             eco_pnl = acc_pnl * self.und_ccy_df_t_m.mid
 
         else:
-            eco_pnl = 0
+            eco_pnl = 0.0
 
         return eco_pnl
 
@@ -152,14 +152,14 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
         discounted_spot = discounted_spot_input.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
 
         if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base :
-            self.eco_pnl = self.trade.base_ccy_notional * pnl_ccy_df_t_m + self.trade.und_ccy_notional * risk_ccy_df_t_m / discounted_spot.mid
+            self.eco_pnl = self.trade.base_ccy_notional * pnl_ccy_df_t_m.mid + self.trade.und_ccy_notional * risk_ccy_df_t_m.mid / discounted_spot.mid
 
         elif self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.und :
-            self.eco_pnl = self.trade.und_ccy_notional * pnl_ccy_df_t_m + self.trade.base_ccy_notional * risk_ccy_df_t_m * discounted_spot.mid
+            self.eco_pnl = self.trade.und_ccy_notional * pnl_ccy_df_t_m.mid + self.trade.base_ccy_notional * risk_ccy_df_t_m.mid * discounted_spot.mid
 
         logger.info("Economic PnL is {eco_pnl}. ".format(eco_pnl=str(self.eco_pnl)))
 
-        self.acc_pnl = self.eco_pnl / pnl_ccy_df_t_m
+        self.acc_pnl = self.eco_pnl / pnl_ccy_df_t_m.mid
         logger.info("Accounting PnL is {acc_pnl}. ".format(acc_pnl=str(self.acc_pnl)))
 
         return self.eco_pnl
@@ -177,7 +177,7 @@ class cls_nsp_acc_pnl(cls_fx_trade_pnl):
 
         self.market_today_rate = market_today_rate.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
 
-        self.acc_pnl = 0
+        self.acc_pnl = 0.0
         self.refresh_acc_pnl()
 
     def __get_accounting_pnl_value(self)->float:
@@ -194,7 +194,7 @@ class cls_nsp_acc_pnl(cls_fx_trade_pnl):
             acc_pnl = base_ccy_notional * (self.market_today_rate.mid - contract_price.mid)
 
         else:
-            acc_pnl = 0
+            acc_pnl = 0.0
 
         self.acc_pnl = acc_pnl
         return acc_pnl
@@ -214,7 +214,7 @@ class cls_nsp_eco_pnl(cls_nsp_acc_pnl):
                  ):
         super().__init__(trade, market_today_rate, pnl_ccy, pnl_cal_date)
 
-        self.eco_pnl = 0
+        self.eco_pnl = 0.0
 
         if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base:
             pnl_ccy_notional = self.trade.base_ccy_notional

@@ -56,7 +56,7 @@ class cls_fx_trade:
 
     @property
     def get_reversed_price(self)->float:
-        return 1/self.contract_price.currency_pair.mid
+        return 1/self.contract_price.mid
 
     @property
     def get_reversed_quotation_mode(self)->Rate.quotation_mode_enum:
