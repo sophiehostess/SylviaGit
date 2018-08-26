@@ -131,13 +131,28 @@ class Test_cls_on_funding_rate_panel(unittest.TestCase):
 
 class Test_cls_discount_factor(unittest.TestCase):
     def test_init(self):
-        EUR= Rate.cls_currency("EUR")
+        EUR = Rate.cls_currency("EUR",365)
         one_month=Rate.cls_tenor(datetime.date(2016,12,17),datetime.date(2017,1,17), "1M")
         DF1 = Rate.cls_discount_factor(EUR,one_month,0.997)
         CF1 = DF1.get_capitalized_factor()
         self.assertEqual(DF1.mid,1/CF1.mid)
         DR1 = DF1.get_discount_rate()
         self.assertEqual(1/(DR1.mid * (datetime.date(2017,1,17) - datetime.date(2016,12,17)).days / 365 + 1), DF1.mid)
+
+class Test_cls_market_quote(unittest.TestCase):
+    def test_init(self):
+        EUR = Rate.cls_currency("EUR", 365)
+        today_spot = Rate.cls_tenor(datetime.date(2016, 12, 17), datetime.date(2016, 12, 19), "T/N")
+        spot_onemonth =  Rate.cls_tenor(datetime.date(2016,12,19),datetime.date(2017,1,17), "1M")
+
+        DF_t_n = Rate.cls_discount_factor(EUR, today_spot, 0.997)
+        MQ1 = Rate.cls_market_quote(EUR, spot_onemonth, 0.2)
+        DF1 = MQ1.get_discount_factor(DF_t_n)
+        DR1 = MQ1.get_discount_rate(DF_t_n)
+
+        self.assertEqual(DF1.mid, 0.997 / ( 0.2 * (datetime.date(2017,1,17) - datetime.date(2016, 12, 19) ).days / 365 + 1) )
+        self.assertEqual(DR1.mid, DF1.get_discount_rate().mid)
+
 
 
 # class Test_cls_discount_factor_curve_linear_ds_rate(unittest.TestCase):
@@ -173,6 +188,59 @@ class Test_cls_capitalized_factor(unittest.TestCase):
         DR1 = CF1.get_discount_rate()
         self.assertEqual((DR1.mid * (datetime.date(2017, 1, 17) - datetime.date(2016, 12, 17)).days / 365 + 1), CF1.mid)
 
+
+class Test_cls_market_quote_curve(unittest.TestCase):
+    def test_init(self):
+        usd_ccy = Rate.cls_currency("USD", 360)
+        mq_ON = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,24),datetime.date(2018,8,27),"O/N"),2.25464634/100)
+        mq_TN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,27),datetime.date(2018,8,28),"T/N"),2.254506667/100)
+        mq_SN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,8,29),"S/N"),2.54503811/100)
+        mq_1W = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,4),"1W"),2.246456453/100)
+        mq_2W = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,11),"2W"),2.248441218/100)
+        mq_1M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,28),"1M"),2.25491505/100)
+        mq_2M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,10,29),"2M"),2.274258118/100)
+        mq_3M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,11,28),"3M"),2.309720822/100)
+        mq_6M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,2,28),"6M"),2.433666541/100)
+        mq_9M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,5,28),"9M"),2.535959205/100)
+        mq_1Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,8,28),"1Y"),2.622098069/100)
+
+        usd_mq_curve = Rate.cls_market_quote_curve(usd_ccy, [mq_ON, mq_TN, mq_SN, mq_1W, mq_2W, mq_1M, mq_2M, mq_3M, mq_6M, mq_9M, mq_1Y])
+
+        mq1 = usd_mq_curve.get_market_quote_by_label("O/N")
+        self.assertEqual(round(mq1.mid, 9), round(2.25464634/100, 9))
+
+        mq2 = usd_mq_curve.get_market_quote_by_label("1Y")
+        self.assertEqual(round(mq2.mid, 9), round(2.622098069/100, 9))
+
+
+        df_on = usd_mq_curve.get_discount_factor_on()
+        # print("df_on.mid is ", df_on.mid)
+        self.assertEqual(round(df_on.mid, 9), round(0.9998121481, 9))
+
+        df_tn = usd_mq_curve.get_discount_factor_tn(df_on)
+        self.assertEqual(round(df_tn.mid, 9), round(0.9997495386, 9))
+
+        df_tn = usd_mq_curve.get_discount_factor_tn(df_on)
+        self.assertEqual(round(df_tn.mid, 9), round(0.9997495386, 9))
+
+        df_1m = mq_1M.get_discount_factor(df_tn)
+        self.assertEqual(round(df_1m.mid, 9), round(0.9978120546, 9))
+
+        df_2m = mq_2M.get_discount_factor(df_tn)
+        self.assertEqual(round(df_2m.mid, 9), round(0.9958490192, 9))
+
+        df_3m = usd_mq_curve.get_discount_factor('3M')
+        self.assertEqual(round(df_3m.mid, 9), round(0.9938830249, 9))
+
+        usd_df_curve = usd_mq_curve.get_discount_factor_curve(Rate.linearization_enum.log_ds_factor)
+        df_6M = usd_df_curve.get_discount_factor_by_label("6M")
+        self.assertEqual(round(df_6M.mid, 9), round(0.987466697, 9))
+
+        df_9M = usd_df_curve.get_discount_factor_by_label("9M")
+        self.assertEqual(round(df_9M.mid, 9), round(0.9808860946, 9))
+
+        df_1Y = usd_df_curve.get_discount_factor_by_label("1Y")
+        self.assertEqual(round(df_1Y.mid, 9), round(0.9738593315, 9))
 
 
 class Test_cls_discount_factor_curve_log_ds_factor(unittest.TestCase):
@@ -221,7 +289,7 @@ class Test_cls_swap_point_panel(unittest.TestCase):
 
         df_usd_20170725 = df_curve_usd.get_discount_factor_by_maturity_date(datetime.date(2017, 7, 25))
         df_usd_20170615 = df_curve_usd.get_discount_factor_by_maturity_date(datetime.date(2017, 6, 15))
-        print("df_usd_20170725 is ",  df_usd_20170725.mid)
+        #print("df_usd_20170725 is ",  df_usd_20170725.mid)
 
         self.assertEqual(round(df_usd_20170725.mid,9), round(0.998657734071825, 9))
 
@@ -258,8 +326,8 @@ class Test_cls_swap_point_panel(unittest.TestCase):
 
         #swap_point_20170725 =
 
-        for iter_swap_point in swap_point_list:
-            print(iter_swap_point.tenor.label, iter_swap_point.mid * swap_point_panel_usdsgd.swap_point_factor)
+        #for iter_swap_point in swap_point_list:
+        #    print(iter_swap_point.tenor.label, iter_swap_point.mid * swap_point_panel_usdsgd.swap_point_factor)
 
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_from_list_by_tenor_label("O/N").mid * swap_point_panel_usdsgd.swap_point_factor, 9), round(-0.229998504268636,9))
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_from_list_by_tenor_label("T/N").mid * swap_point_panel_usdsgd.swap_point_factor, 9), round(-0.230000000172037,9))
@@ -278,10 +346,10 @@ class Test_cls_swap_point_panel(unittest.TestCase):
 
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_by_start_maturity(datetime.date(2017,7,25)).mid, 9), round(-0.0006703339836723035, 9))
 
-        print(df_sgd_ON.unique_key)
+        #print(df_sgd_ON.unique_key)
 
-        for iter_swap_point in swap_point_list:
-            print(iter_swap_point.unique_key)
+        #for iter_swap_point in swap_point_list:
+        #    print(iter_swap_point.unique_key)
 
 
 # O/N	-0.229998504268636
