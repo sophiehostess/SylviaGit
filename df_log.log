@@ -1,0 +1,124 @@
+2017-09-03 17:58:59,704 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-09-03 17:58:59,704 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-09-03 17:58:59,704 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-09-03 17:58:59,751 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-09-03 17:58:59,751 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-09-03 17:58:59,751 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-09-03 18:00:59,273 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-09-03 18:00:59,273 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-09-03 18:00:59,273 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-09-03 18:00:59,273 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 299.40000000000003. 
+2017-09-03 18:00:59,273 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-09-03 18:00:59,273 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-09-03 18:00:59,273 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-09-03 18:00:59,273 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 199.4000000000001. 
+2017-10-06 23:29:09,672 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:29:09,702 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:29:09,703 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:29:09,703 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 299.40000000000003. 
+2017-10-06 23:29:09,705 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:29:09,706 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-10-06 23:29:09,706 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-10-06 23:29:09,706 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 199.4000000000001. 
+2017-10-06 23:29:09,711 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:29:09,711 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-10-06 23:40:51,777 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:40:51,777 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:40:51,777 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:40:51,777 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 299.40000000000003. 
+2017-10-06 23:40:51,777 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:40:51,777 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-10-06 23:40:51,777 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2017-10-06 23:40:51,777 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 199.4000000000001. 
+2017-10-06 23:40:51,777 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:40:51,777 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:40:51,792 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:40:51,792 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:50:08,199 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:50:08,199 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:50:08,199 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 0. 
+2017-10-06 23:50:23,874 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:50:23,890 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:50:23,890 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 0. 
+2017-10-06 23:58:53,975 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-06 23:58:53,975 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-06 23:58:53,975 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 0. 
+2017-10-07 00:05:09,046 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:05:09,046 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:05:09,046 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.0915068493151. 
+2017-10-07 00:25:21,103 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:25:21,104 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:25:21,106 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.0915068493151. 
+2017-10-07 00:27:16,988 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:27:16,988 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:28:27,002 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:28:27,002 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:28:27,002 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.0915068493151. 
+2017-10-07 00:29:08,488 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:29:08,488 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:29:08,489 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.0915068493151. 
+2017-10-07 00:30:00,359 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:30:00,359 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:30:00,359 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.0915068493151. 
+2017-10-07 00:31:13,809 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:31:13,809 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:40:51,773 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:40:51,773 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:40:51,774 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.0922831050229. 
+2017-10-07 00:41:13,944 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:41:13,944 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:47:41,922 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2017-10-07 00:47:41,922 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2017-10-07 00:47:41,922 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.1136073059361. 
+2018-08-26 14:54:57,227 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 14:56:53,836 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 14:57:49,506 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 15:00:15,044 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 15:03:44,646 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 15:04:08,704 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 15:12:18,980 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 15:18:42,516 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 15:24:10,078 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 15:32:42,241 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:05:53,169 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:08:59,566 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:10:38,811 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:11:35,310 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:17:51,926 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:18:16,876 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:20:22,458 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:20:52,127 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:21:28,622 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:21:51,628 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 16:24:19,002 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 17:05:38,932 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 17:07:11,617 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:33:24,046 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:35:53,832 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:37:08,729 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:38:20,341 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:39:04,780 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:39:49,349 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:41:48,987 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:42:27,940 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:45:18,751 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:46:37,214 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:49:26,943 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 18:52:22,880 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-26 19:16:22,644 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-28 09:43:14,938 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-28 10:04:38,941 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-28 23:35:20,742 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-28 23:36:11,240 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-28 23:44:33,641 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 00:40:41,267 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 00:42:14,342 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 00:42:14,343 - Rate2.py - Rate2 - get_swap_point_from_list_by_tenor_label - WARNING - parameter label O/N is not found in swap point list.
+2018-08-29 00:44:11,169 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 00:44:11,170 - Rate2.py - Rate2 - get_swap_point_from_list_by_tenor_label - WARNING - parameter label O/N is not found in swap point list.
+2018-08-29 00:45:18,331 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 00:45:18,332 - Rate2.py - Rate2 - get_swap_point_from_list_by_tenor_label - WARNING - parameter label O/N is not found in swap point list.
+2018-08-29 00:51:44,686 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 01:01:58,828 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 01:08:01,839 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
+2018-08-29 01:12:54,291 - Rate2.py - Rate2 - __init__ - INFO - swap point list is not auto set.
