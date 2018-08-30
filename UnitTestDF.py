@@ -242,7 +242,7 @@ class Test_cls_market_quote_curve(unittest.TestCase):
 
 class Test_cls_discount_factor_curve_log_ds_factor(unittest.TestCase):
     def test_init(self):
-        usd_ccy = Rate.cls_currency("USD", 360)
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
 
         df_ON = Rate.cls_discount_factor(usd_ccy,Rate.cls_tenor(datetime.date(2017, 6,13),datetime.date(2017,6,14),"O/N"),0.999968868900009)
         df_TN = Rate.cls_discount_factor(usd_ccy,Rate.cls_tenor(datetime.date(2017, 6,13),datetime.date(2017,6,15),"T/N"),0.999937738800022)
@@ -257,7 +257,7 @@ class Test_cls_discount_factor_curve_log_ds_factor(unittest.TestCase):
         df_1Y = Rate.cls_discount_factor(usd_ccy,Rate.cls_tenor(datetime.date(2017, 6,13),datetime.date(2018,6,17),"1Y"),0.986029614300948)
 
         usd_df_curve = Rate.cls_discount_factor_curve(usd_ccy, [df_ON, df_TN, df_SN, df_1W, df_2W, df_1M, df_2M, df_3M, df_6M, df_9M, df_1Y],
-                                                      Rate.linearization_enum.log_ds_factor, Rate.date_shift_enum.D2)
+                                                      Rate.linearization_enum.log_ds_factor)
 
         df1 = usd_df_curve.get_discount_factor_by_maturity_date(datetime.date(2017, 7, 25))
         # print("result is ",  df1.mid)
@@ -267,7 +267,7 @@ class Test_cls_discount_factor_curve_log_ds_factor(unittest.TestCase):
 
 class Test_cls_swap_point_panel(unittest.TestCase):
     def test_init(self):
-        usd_ccy = Rate.cls_currency("USD", 360)
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
 
         date_of_today = datetime.date(2017, 6, 13)
 
@@ -284,7 +284,7 @@ class Test_cls_swap_point_panel(unittest.TestCase):
         df_usd_1Y = Rate.cls_discount_factor(usd_ccy,Rate.cls_tenor(date_of_today,datetime.date(2018,6,15),"1Y"),0.986029614300948)
 
         df_curve_usd = Rate.cls_discount_factor_curve(usd_ccy, [df_usd_ON, df_usd_TN, df_usd_SN, df_usd_1W, df_usd_2W, df_usd_1M, df_usd_2M, df_usd_3M, df_usd_6M, df_usd_9M, df_usd_1Y],
-                                                      Rate.linearization_enum.log_ds_factor, Rate.date_shift_enum.D2)
+                                                      Rate.linearization_enum.log_ds_factor)
 
         df_usd_20170725 = df_curve_usd.get_discount_factor_by_maturity_date(datetime.date(2017, 7, 25))
         df_usd_20170615 = df_curve_usd.get_discount_factor_by_maturity_date(datetime.date(2017, 6, 15))
@@ -292,7 +292,7 @@ class Test_cls_swap_point_panel(unittest.TestCase):
 
         self.assertEqual(round(df_usd_20170725.mid,9), round(0.998657734071825, 9))
 
-        sgd_ccy = Rate.cls_currency("SGD", 365)
+        sgd_ccy = Rate.cls_currency("SGD", 365, Rate.date_shift_enum.D2)
 
         df_sgd_ON = Rate.cls_discount_factor(sgd_ccy,Rate.cls_tenor(date_of_today,datetime.date(2017,6,14),"O/N"),0.999985489497763)
         df_sgd_TN = Rate.cls_discount_factor(sgd_ccy,Rate.cls_tenor(date_of_today,datetime.date(2017,6,15),"T/N"),0.999970979621296)
@@ -306,7 +306,7 @@ class Test_cls_swap_point_panel(unittest.TestCase):
         df_sgd_2Y = Rate.cls_discount_factor(sgd_ccy,Rate.cls_tenor(date_of_today,datetime.date(2019,6,17),"2Y"),0.975986362472653)
 
         df_curve_sgd = Rate.cls_discount_factor_curve(usd_ccy, [df_sgd_ON, df_sgd_TN, df_sgd_1W, df_sgd_1M, df_sgd_2M, df_sgd_3M, df_sgd_6M, df_sgd_9M, df_sgd_1Y, df_sgd_2Y],
-                                                      Rate.linearization_enum.log_ds_factor, Rate.date_shift_enum.D2)
+                                                      Rate.linearization_enum.log_ds_factor)
 
         df_sgd_20170725 = df_curve_sgd.get_discount_factor_by_maturity_date(datetime.date(2017,7,25))
         df_sgd_20170615 = df_curve_sgd.get_discount_factor_by_maturity_date(datetime.date(2017,6,15))
@@ -322,7 +322,7 @@ class Test_cls_swap_point_panel(unittest.TestCase):
         spot_rate_usdsgd = Rate.cls_fx_spot_rate(usdsgd, spot_tenor, 1.38375)
 
         swap_point_panel_usdsgd = Rate.cls_swap_point_panel(usdsgd, spot_rate_usdsgd, df_curve_usd, df_curve_sgd,False)
-        swap_point_panel_usdsgd.set_swap_point_list()
+        swap_point_panel_usdsgd.refresh_swap_point_list()
 
         #swap_point_20170725 =
 
