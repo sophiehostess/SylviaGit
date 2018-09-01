@@ -324,11 +324,6 @@ class Test_cls_swap_point_panel(unittest.TestCase):
         swap_point_panel_usdsgd = Rate.cls_swap_point_panel(usdsgd, spot_rate_usdsgd, df_curve_usd, df_curve_sgd,False)
         swap_point_panel_usdsgd.refresh_swap_point_list()
 
-        #swap_point_20170725 =
-
-        #for iter_swap_point in swap_point_list:
-        #    print(iter_swap_point.tenor.label, iter_swap_point.mid * swap_point_panel_usdsgd.swap_point_factor)
-
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_from_list_by_tenor_label("O/N").mid * swap_point_panel_usdsgd.swap_point_factor, 9), round(-0.229998504268636,9))
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_from_list_by_tenor_label("T/N").mid * swap_point_panel_usdsgd.swap_point_factor, 9), round(-0.230000000172037,9))
         self.assertEqual(round(swap_point_panel_usdsgd.get_swap_point_from_list_by_tenor_label("1W").mid * swap_point_panel_usdsgd.swap_point_factor, 9), round(-1.15000000056042,9))
@@ -371,3 +366,100 @@ class Test_cls_swap_point_panel(unittest.TestCase):
 # 9Y	-440.411656980548
 # 10Y	-532.33025305504
 # 12Y	-721.902727505068
+
+
+class Test_create_swap_point_panel_by_market_quote(unittest.TestCase):
+    def test_init(self):
+        #today's date = 2018-08-24
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
+        mq_usd_ON = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,24),datetime.date(2018,8,27),"O/N"),2.25464634/100)
+        mq_usd_TN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,27),datetime.date(2018,8,28),"T/N"),2.254506667/100)
+        mq_usd_SN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,8,29),"S/N"),2.54503811/100)
+        mq_usd_1W = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,4),"1W"),2.246456453/100)
+        mq_usd_2W = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,11),"2W"),2.248441218/100)
+        mq_usd_1M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,28),"1M"),2.25491505/100)
+        mq_usd_2M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,10,29),"2M"),2.274258118/100)
+        mq_usd_3M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,11,28),"3M"),2.309720822/100)
+        mq_usd_6M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,2,28),"6M"),2.433666541/100)
+        mq_usd_9M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,5,28),"9M"),2.535959205/100)
+        mq_usd_1Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,8,28),"1Y"),2.622098069/100)
+
+        usd_mq_curve = Rate.cls_market_quote_curve(usd_ccy, [mq_usd_ON, mq_usd_TN, mq_usd_SN, mq_usd_1W, mq_usd_2W, mq_usd_1M, mq_usd_2M, mq_usd_3M, mq_usd_6M, mq_usd_9M, mq_usd_1Y])
+
+
+        php_ccy = Rate.cls_currency("PHP", 360, Rate.date_shift_enum.D1)
+        mq_php_ON = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,24),datetime.date(2018,8,28),"O/N"),3.60160413/100)
+        mq_php_1W = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,4),"1W"),0.274157119/100)
+        mq_php_1M = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,28),"1M"),3.603877329/100)
+        mq_php_2M = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,10,29),"2M"),4.230839063/100)
+        mq_php_3M = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,11,28),"3M"),4.514130365/100)
+        mq_php_6M = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,2,28),"6M"),4.737593254/100)
+        mq_php_9M = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,5,28),"9M"),4.903449646/100)
+        mq_php_1Y = Rate.cls_market_quote(php_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,8,28),"1Y"),4.964164241/100)
+
+        php_mq_curve = Rate.cls_market_quote_curve(php_ccy, [mq_php_ON, mq_php_1W, mq_php_1M, mq_php_2M, mq_php_3M, mq_php_6M, mq_php_9M, mq_php_1Y])
+
+
+        mq1 = php_mq_curve.get_market_quote_by_label("O/N")
+        self.assertEqual(round(mq1.mid, 9), round(3.60160413/100, 9))
+
+        mq2 = php_mq_curve.get_market_quote_by_label("1Y")
+        self.assertEqual(round(mq2.mid, 9), round(4.964164241/100, 9))
+
+
+        df_on = php_mq_curve.get_discount_factor_by_label('O/N')
+        # print("df_on.mid is ", df_on.mid)
+        self.assertEqual(round(df_on.mid, 9), round(0.999599981841894, 9))
+
+        df_1m = mq_php_1M.get_discount_factor(df_on)
+        self.assertEqual(round(df_1m.mid, 9), round(0.996507481499024, 9))
+
+        df_2m = mq_php_2M.get_discount_factor(df_on)
+        self.assertEqual(round(df_2m.mid, 9), round(0.992369138640949, 9))
+
+        df_3m = php_mq_curve.get_discount_factor_by_label('3M')
+        self.assertEqual(round(df_3m.mid, 9), round(0.98819999705213, 9))
+
+        php_df_curve = php_mq_curve.get_discount_factor_curve(Rate.linearization_enum.log_ds_factor)
+        df_6M = php_df_curve.get_discount_factor_by_label("6M")
+        self.assertEqual(round(df_6M.mid, 9), round(0.975967546924571, 9))
+
+        df_9M = php_df_curve.get_discount_factor_by_label("9M")
+        self.assertEqual(round(df_9M.mid, 9), round(0.963762945208683, 9))
+
+        df_1Y = php_df_curve.get_discount_factor_by_label("1Y")
+        self.assertEqual(round(df_1Y.mid, 9), round(0.951699871253031, 9))
+
+
+        usdphp_pair = Rate.cls_currency_pair(usd_ccy, php_ccy, Rate.quotation_mode_enum.base_und, 1000)
+
+        usdphp_spot_rate = Rate.cls_fx_spot_rate(usdphp_pair, Rate.cls_tenor(datetime.date(2018, 8,24),datetime.date(2018,8,28)), 53.478)
+
+        swp_panel_usdphp = Rate.create_swap_point_panel_by_market_quote(usdphp_pair,usdphp_spot_rate, usd_mq_curve, php_mq_curve, Rate.linearization_enum.log_ds_factor, Rate.linearization_enum.log_ds_factor)
+        #print("und spot shift is ", swp_panel_usdphp.df_curve_und_ccy.spot_date_shift)
+
+        swp_panel_usdphp.refresh_swap_point_list()
+
+        swap_on = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('O/N')
+        self.assertEqual(round(swap_on.mid, 9), round(7.99999999922818/1000, 9))
+
+        swap_1w = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('1W')
+        self.assertEqual(round(swap_1w.mid, 9), round(-20.499999999565 / 1000, 9))
+
+        swap_1m = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('1M')
+        self.assertEqual(round(swap_1m.mid, 9), round(62.0000000199923 / 1000, 9))
+
+        swap_2m = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('2M')
+        self.assertEqual(round(swap_2m.mid, 9), round(179.49999998784 / 1000, 9))
+
+        swap_3m = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('3M')
+        self.assertEqual(round(swap_3m.mid, 9), round(299.499999950342 / 1000, 9))
+
+        swap_6m = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('6M')
+        self.assertEqual(round(swap_6m.mid, 9), round(621.999999976751 / 1000, 9))
+
+        swap_9m = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('9M')
+        self.assertEqual(round(swap_9m.mid, 9), round(942.000000096037 / 1000, 9))
+
+        swap_1y = swp_panel_usdphp.get_swap_point_from_list_by_tenor_label('1Y')
+        self.assertEqual(round(swap_1y.mid, 9), round(1236.9999998302 / 1000, 9))

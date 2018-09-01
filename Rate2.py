@@ -625,15 +625,15 @@ class cls_fx_forward_rate(cls_fx_rate):
             self.__swap_point.ask / self.currency_pair.swap_point_factor)
 
     @property
-    def swap_point_value(self):
+    def swap_point_value(self)->float:
         return self.__swap_point.mid
 
     @property
-    def swap_point_value_in_unit(self):
+    def swap_point_value_in_unit(self)->float:
         return self.__swap_point.mid / self.currency_pair.swap_point_factor
 
     @property
-    def swap_point(self):
+    def swap_point(self)->cls_fx_rate:
         return self.__swap_point
 
 
