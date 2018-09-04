@@ -18,8 +18,14 @@ class quotation_mode_enum(Enum):
 
 
 class linearization_enum(Enum):
+    # Interpolate Log(DiscountFactor) linearly
     log_ds_factor = "log_ds_factor"
+
+    # Interpolate DiscountRate linearly
     linear_ds_rate = "linear_ds_rate"
+
+    #interpolate DiscountRate*Time linearly
+    linear_rate_time = "linear_rate_time"
 
 class base_or_und_enum(Enum):
     base = "base"
@@ -625,7 +631,8 @@ class cls_fx_forward_rate(cls_fx_rate):
             self.__swap_point.ask / self.currency_pair.swap_point_factor)
 
     @property
-    def swap_point_value(self)->float:
+    def swap_point_value_with_factor(self)->float:
+        #mutiplied with swap point factor
         return self.__swap_point.mid
 
     @property
@@ -638,27 +645,29 @@ class cls_fx_forward_rate(cls_fx_rate):
 
 
     @swap_point.setter
-    def swap_point(self, swap_point_value: cls_rate):
+    def swap_point(self, swap_point_with_factor: cls_rate):
         self.set_rate_by_mid_bid_ask(
-            swap_point_value.mid, swap_point_value.bid, swap_point_value.ask)
+            swap_point_with_factor.mid, swap_point_with_factor.bid, swap_point_with_factor.ask)
 
         self.set_rate_by_mid_bid_ask(
-            self.__spot_rate.mid + swap_point_value.mid / self.currency_pair.swap_point_factor,
-            self.__spot_rate.bid + swap_point_value.bid / self.currency_pair.swap_point_factor,
-            self.__spot_rate.ask + swap_point_value.ask / self.currency_pair.swap_point_factor)
+            self.__spot_rate.mid + swap_point_with_factor.mid / self.currency_pair.swap_point_factor,
+            self.__spot_rate.bid + swap_point_with_factor.bid / self.currency_pair.swap_point_factor,
+            self.__spot_rate.ask + swap_point_with_factor.ask / self.currency_pair.swap_point_factor)
 
     def set_forward_rate_by_spot_and_df(
             self,
             spot_rate: cls_fx_spot_rate,
-            base_ccy_df_s_m: cls_discount_factor,
-            underlying_ccy_df_s_m: cls_discount_factor):
+            base_ccy_df_s_m: cls_discount_factor, #base currency discount factor spot date to maturity date
+            underlying_ccy_df_s_m: cls_discount_factor): #underlying currency discount factor spot date to maturity date
 
-        spot_rate_with_aligned_quotation_mode = spot_rate.get_fx_rate_by_quotation_mode(
-            self.currency_pair.quotation_mode)
+        spot_rate_with_aligned_quotation_mode = spot_rate.get_fx_rate_by_quotation_mode(self.currency_pair.quotation_mode)
 
+        # quotation is base-und
         if self.currency_pair.quotation_mode == quotation_mode_enum.base_und:
             self.mid = self.currency_pair.swap_point_factor * spot_rate_with_aligned_quotation_mode.mid * (
                 base_ccy_df_s_m.mid / underlying_ccy_df_s_m.mid - 1)
+
+        # quotation is und-base
         elif self.currency_pair.quotation_mode == quotation_mode_enum.und_base:
             self.mid = self.currency_pair.swap_point_factor * spot_rate_with_aligned_quotation_mode.mid * (
                 underlying_ccy_df_s_m.mid / base_ccy_df_s_m.mid - 1)
@@ -680,6 +689,7 @@ class cls_fx_discounted_spot_rate(cls_fx_forward_rate):
         super().__init__(currency_pair, tenor, mid, bid, ask)
         self.tenor.label = "TDY"
 
+
 class cls_swap_point(cls_fx_rate):
     def __init__(self,
                  currency_pair: cls_currency_pair,
@@ -689,27 +699,25 @@ class cls_swap_point(cls_fx_rate):
                  ask: float=0):
         super().__init__(currency_pair, tenor, mid, bid, ask)
 
-    def set_swap_point_by_setting_forward_rate_and_spot(
-            self, spot_rate: cls_fx_spot_rate,
-            forward_rate: cls_fx_forward_rate):
+    def set_swap_point_by_forward_rate_and_spot(
+                                                self, spot_rate: cls_fx_spot_rate,
+                                                forward_rate: cls_fx_forward_rate):
 
-        spot_rate_with_aligned_quotation_mode = spot_rate.get_fx_rate_by_quotation_mode(
-            self.currency_pair.quotation_mode)
-        forward_rate_with_aligned_quotation_mode = forward_rate.get_fx_rate_by_quotation_mode(
-            self.currency_pair.quotation_mode)
+        spot_rate_with_aligned_quotation_mode = spot_rate.get_fx_rate_by_quotation_mode(self.currency_pair.quotation_mode)
+        forward_rate_with_aligned_quotation_mode = forward_rate.get_fx_rate_by_quotation_mode(self.currency_pair.quotation_mode)
 
-        self.mid = (forward_rate_with_aligned_quotation_mode.mid -
-                    spot_rate_with_aligned_quotation_mode.mid
-                    ) * self.currency_pair.swap_point_factor
+        self.mid = (forward_rate_with_aligned_quotation_mode.mid - spot_rate_with_aligned_quotation_mode.mid) * self.currency_pair.swap_point_factor
 
-    def set_swap_point_by_discount_factor(
+    def set_swap_point_by_discount_factors(
             self,
             spot_rate: cls_fx_spot_rate,
             df_base_s_m: cls_discount_factor,
             df_und_s_m: cls_discount_factor):
 
+        # for maturity is not spot date
         if self.tenor.maturity_date > spot_rate.tenor.maturity_date or self.tenor.maturity_date < spot_rate.tenor.maturity_date :
 
+            # quotation is base-und
             if self.currency_pair.quotation_mode == quotation_mode_enum.base_und:
                 self.set_rate_by_bid_ask(
                     spot_rate.mid *
@@ -717,6 +725,7 @@ class cls_swap_point(cls_fx_rate):
                     spot_rate.mid *
                     (df_base_s_m.bid / df_und_s_m.ask - 1))
 
+            # quotation is und-base
             elif self.currency_pair.quotation_mode == quotation_mode_enum.und_base:
                 self.set_rate_by_bid_ask(
                     spot_rate.mid *
@@ -724,6 +733,8 @@ class cls_swap_point(cls_fx_rate):
                     spot_rate.mid *
                     (df_und_s_m.bid / df_base_s_m.ask - 1))
 
+        # for maturity is spot date
+        # always return 0
         elif self.tenor.maturity_date == spot_rate.tenor.maturity_date:
             self.set_rate_by_bid_ask(0, 0)
 
@@ -735,6 +746,7 @@ class cls_swap_point(cls_fx_rate):
 class cls_rate_curve:
     def __init__(self, fx_rate_list: list):
 
+        # sort by maturity date, then start date
         if fx_rate_list is not None:
             fx_rate_list.sort(
                 key=lambda fx_rate: fx_rate.tenor.start_date, reverse=False)
@@ -742,7 +754,12 @@ class cls_rate_curve:
                 key=lambda fx_rate: fx_rate.tenor.maturity_date, reverse=False)
             self.fx_rate_list = fx_rate_list
         else:
+            logger.info("Empty rate curve is created")
             self.fx_rate_list = []
+
+    @property
+    def max_maturiy_date(self)->datetime.date:
+        return self.fx_rate_list[-1].tenor.maturity_date
 
 
 class cls_single_currency_rate_curve(cls_rate_curve):
@@ -754,6 +771,11 @@ class cls_single_currency_rate_curve(cls_rate_curve):
     @property
     def spot_date_shift(self)->date_shift_enum:
         return self.currency.spot_date_shift
+
+    @property
+    def currency_label(self):
+        return self.currency.label
+
 
 class cls_discount_factor_curve(cls_single_currency_rate_curve):
     def __init__(self,
@@ -773,6 +795,7 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
         if linearization == linearization_enum.log_ds_factor:
             value_of_df_mid = 10 ** ((math.log10(df_late.mid) - math.log10(df_early.mid)) / (df_late.tenor.number_of_days - df_early.tenor.number_of_days) * (tenor_mid.number_of_days - df_early.tenor.number_of_days) + math.log10(df_early.mid))
             return cls_discount_factor(df_early.currency, tenor_mid, value_of_df_mid)
+
         elif linearization == linearization_enum.linear_ds_rate:
 
             ds_rate_late = df_late.get_discount_rate()
@@ -785,6 +808,11 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
                  ) + ds_rate_early.mid
 
             return cls_discount_rate(df_early.currency, tenor_mid, value_of_ds_mid).get_discount_factor()
+
+        elif linearization == linearization_enum.linear_rate_time:
+            #to be enhanced
+            pass
+
         else:
             return None
 
@@ -797,17 +825,22 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
                 return ds_factor_iter
 
         #interpolation
-        tenor_mid = cls_tenor(self.fx_rate_list[-1].tenor.start_date, maturity_date)
+        #create the target tenor
+        tenor_mid = cls_tenor(self.today_date, maturity_date)
 
         # print("tenor_mid.start_date is ", tenor_mid.start_date, "tenor_mid.maturity_date is ", tenor_mid.maturity_date)
 
         if maturity_date == tenor_mid.start_date:
             # print("maturity_date == tenor_mid.start_date")
-            return cls_discount_factor(self.fx_rate_list[0].currency, cls_tenor(tenor_mid.start_date, maturity_date), 1)
-        elif maturity_date > tenor_mid.maturity_date:
+            return cls_discount_factor(self.currency, cls_tenor(tenor_mid.start_date, maturity_date), 1)
+        elif maturity_date > self.max_maturiy_date:
             # print("The target maturity date is ", maturity_date, ". The max maturity date in curve is ", tenor_mid.maturity_date)
-            return None
+            # need extrapolation
+
+            return self.get_discount_factor_by_interpolation(self.fx_rate_list[-2], self.fx_rate_list[-1], tenor_mid, self.linearization)
+
         else:
+            # find out the discount factor earlier than target one , and the one later than target one
             previous_df = self.fx_rate_list[0]
             for ds_factor_iter in self.fx_rate_list:
 
@@ -820,8 +853,7 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
                     # print("df_early's maturity date is " +
                     #      df_early.tenor.maturity_date.strftime('%Y-%m-%d'))
 
-                    return self.get_discount_factor_by_interpolation(
-                        df_early, df_late, tenor_mid, self.linearization)
+                    return self.get_discount_factor_by_interpolation(df_early, df_late, tenor_mid, self.linearization)
 
                 previous_df = ds_factor_iter
 
@@ -928,6 +960,9 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
         elif self.spot_date_shift == date_shift_enum.D2:
             return self.__get_discount_factor_tn(ds_factor_on)
 
+        elif self.spot_date_shift == date_shift_enum.D0:
+            return cls_discount_factor(self.currency, cls_tenor(self.today_date, self.today_date, "TDY"), 1)
+
     def get_discount_factor_by_label(self, tenor_label:str)->cls_discount_factor:
         if tenor_label == 'O/N':
             return self.__get_discount_factor_on()
@@ -938,6 +973,7 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
         else:
             market_quote = self.get_market_quote_by_label(tenor_label)
             if market_quote is None:
+                assert("tenor label {tenor_label} is not found in market quote curve".format(tenor_label=tenor_label))
                 return None
             else:
                 return market_quote.get_discount_factor(self.get_discount_factor_today_spot())
@@ -966,10 +1002,19 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
     def spot_date(self)->datetime.date:
         if self.spot_date_shift == date_shift_enum.D1:
             return self.get_market_quote_by_label('O/N').tenor.maturity_date
+
         elif self.spot_date_shift == date_shift_enum.D2:
             return self.get_market_quote_by_label('T/N').tenor.maturity_date
+
+        elif self.spot_date_shift == date_shift_enum.D0:
+            return self.get_market_quote_by_label('O/N').tenor.start_date
+
         else:
-            return self.fx_rate_list[-1].tenor.start_date
+            assert("invalid spotdate shift")
+
+    @property
+    def today_date(self)->datetime.date:
+        return self.get_market_quote_by_label('O/N').tenor.start_date
 
     @property
     def last_item(self)->cls_market_quote:
@@ -1021,9 +1066,21 @@ class cls_swap_point_panel(cls_rate_curve):
         for swap_point_iter in self.swap_point_list:
             if swap_point_iter.tenor.label == label.upper().strip():
                 return swap_point_iter
+        else:
+            logger.warning("parameter label {label} is not found in swap point list.".format(label=label))
+            return None
 
-        logger.warning("parameter label {label} is not found in swap point list.".format(label=label))
-        return None
+
+    def get_swap_point_from_list_by_maturity(self, maturity_date: datetime.date) -> cls_swap_point:
+
+        for swap_point_iter in self.swap_point_list:
+            if swap_point_iter.tenor.maturity_date == maturity_date:
+                return swap_point_iter
+        else:
+            logger.warning("parameter maturity_date {maturity_date} is not found in swap point list.".format(maturity_date=maturity_date.__str__()))
+            return None
+
+
 
     def refresh_swap_point_list(self):
         # follow the tenors of underlying currency
@@ -1047,16 +1104,8 @@ class cls_swap_point_panel(cls_rate_curve):
             df_base_spot_today = self.df_curve_base_ccy.get_discount_factor_by_start_maturity(self.spot_date, self.today_date)
             df_und_spot_today = self.df_curve_und_ccy.get_discount_factor_by_start_maturity(self.spot_date, self.today_date)
 
-            swap_point_spot_tom = self.get_swap_point_by_df(df_base_spot_tom, df_und_spot_tom)
-            swap_point_spot_today = self.get_swap_point_by_df(df_base_spot_today, df_und_spot_today)
-
-            # print("start_date=", start_date)
-            # print("maturity_date=", maturity_date)
-            # print("spot_date=", self.spot_date)
-            # print("swap_point_spot_tom.mid=", swap_point_spot_tom.mid)
-            # print("swap_point_spot_today.mid=", swap_point_spot_today.mid)
-
-            #logger.info("swap point of tenor O/N is added to list.")
+            swap_point_spot_tom = self.__set_and_return_swap_point_by_df(df_base_spot_tom, df_und_spot_tom)
+            swap_point_spot_today = self.__set_and_return_swap_point_by_df(df_base_spot_today, df_und_spot_today)
 
             return cls_swap_point(self.currency_pair, cls_tenor(self.today_date, maturity_date, 'O/N'), swap_point_spot_tom.mid - swap_point_spot_today.mid)
 
@@ -1067,9 +1116,13 @@ class cls_swap_point_panel(cls_rate_curve):
             df_base_spot_tom = self.df_curve_base_ccy.get_discount_factor_by_start_maturity(self.spot_date, date_tom)
             df_und_spot_tom = self.df_curve_und_ccy.get_discount_factor_by_start_maturity(self.spot_date, date_tom)
 
-            swap_point_spot_tom = self.get_swap_point_by_df(df_base_spot_tom, df_und_spot_tom)
+            swap_point_spot_tom = self.__set_and_return_swap_point_by_df(df_base_spot_tom, df_und_spot_tom)
 
             return cls_swap_point(self.currency_pair, cls_tenor(date_tom, maturity_date, 'T/N'), -1 * swap_point_spot_tom.mid)
+
+        elif maturity_date == self.df_curve_und_ccy.spot_date and self.df_curve_und_ccy.spot_date_shift == date_shift_enum.D0:
+
+            return cls_swap_point(self.currency_pair, cls_tenor(maturity_date, maturity_date, 'TDY'),  0)
 
         else:
             df_base_spot_maturity = self.df_curve_base_ccy.get_discount_factor_by_start_maturity(self.spot_date, maturity_date)
@@ -1077,19 +1130,19 @@ class cls_swap_point_panel(cls_rate_curve):
 
             df_und_spot_maturity = self.df_curve_und_ccy.get_discount_factor_by_start_maturity(self.spot_date, maturity_date)
 
-            return self.get_swap_point_by_df(df_base_spot_maturity, df_und_spot_maturity)
+            return self.__set_and_return_swap_point_by_df(df_base_spot_maturity, df_und_spot_maturity)
 
-    def get_swap_point_by_df(
-            self,
-            df_base: cls_discount_factor,
-            df_und: cls_discount_factor) -> cls_swap_point:
+    def __set_and_return_swap_point_by_df(
+                            self,
+                            df_base: cls_discount_factor,
+                            df_und: cls_discount_factor) -> cls_swap_point:
 
         swap_point = cls_swap_point(self.currency_pair, df_und.tenor)
 
-        swap_point.set_swap_point_by_discount_factor(
-            self.spot_rate,
-            df_base,
-            df_und)
+        swap_point.set_swap_point_by_discount_factors(
+                                                    self.spot_rate,
+                                                    df_base,
+                                                    df_und)
 
         return swap_point
 
@@ -1102,15 +1155,63 @@ class cls_swap_point_panel(cls_rate_curve):
         return cls_fx_forward_rate(self.currency_pair, cls_tenor(self.today_date, maturity_date),
                                    self.spot_rate.mid * df_base_spot_maturity.mid / df_und_spot_maturity.mid )
 
-def create_swap_point_panel_by_market_quote(currency_pair: cls_currency_pair,
-                                            spot_rate_input: cls_fx_spot_rate,
-                                            mq_curve_base_ccy: cls_market_quote_curve,
-                                            mq_curve_und_ccy: cls_market_quote_curve,
-                                            df_curve_base_linearization: linearization_enum,
-                                            df_curve_und_linearization: linearization_enum,
-                                            )->cls_swap_point_panel:
+
+def create_swap_point_panel_by_market_quote_curves(currency_pair: cls_currency_pair,
+                                                   spot_rate_input: cls_fx_spot_rate,
+                                                   mq_curve_base_ccy: cls_market_quote_curve,
+                                                   mq_curve_und_ccy: cls_market_quote_curve,
+                                                   df_curve_base_linearization: linearization_enum = linearization_enum.log_ds_factor,
+                                                   df_curve_und_linearization: linearization_enum = linearization_enum.log_ds_factor,
+                                                   set_swap_point_list_when_initial: bool = False
+                                                   )->cls_swap_point_panel:
 
     df_curve_base_ccy = mq_curve_base_ccy.get_discount_factor_curve(df_curve_base_linearization)
     df_curve_und_ccy = mq_curve_und_ccy.get_discount_factor_curve(df_curve_und_linearization)
 
-    return cls_swap_point_panel(currency_pair, spot_rate_input, df_curve_base_ccy, df_curve_und_ccy)
+    return cls_swap_point_panel(currency_pair, spot_rate_input, df_curve_base_ccy, df_curve_und_ccy, set_swap_point_list_when_initial)
+
+
+class cls_rate_dict:
+    def __init__(self ,
+                 dict_label: str ,
+                 today_date: datetime.date):
+        self.label = dict_label
+        self.today_date = today_date
+        self.curve_dict = {}
+
+    def get_rate_curve_by_currency_label(self, currency_label:str)->cls_discount_factor_curve:
+        if currency_label in self.curve_dict:
+            return self.curve_dict[currency_label]
+        else:
+            return None
+
+class cls_discount_factor_curve_dict(cls_rate_dict):
+    def get_swap_point_panel_by_currency_pair(self,currency_pair:cls_currency_pair, spot_rate:cls_fx_spot_rate)->cls_swap_point_panel:
+
+        if currency_pair.base.label in self.curve_dict:
+            df_curve_base_ccy = self.get_rate_curve_by_currency_label(currency_pair.base.label)
+        else:
+            assert("currency {label} is not in dict".format(label=currency_pair.base.label))
+            return None
+
+        if currency_pair.underlying.label in self.curve_dict:
+            df_curve_und_ccy = self.get_rate_curve_by_currency_label(currency_pair.underlying.label)
+        else:
+            assert ("currency {label} is not in dict".format(label=currency_pair.underlying.label))
+            return None
+
+        return cls_swap_point_panel(currency_pair, spot_rate, df_curve_base_ccy, df_curve_und_ccy)
+
+
+class cls_market_quote_curve_dict(cls_rate_dict):
+
+    def get_discount_rate_curve_dict(self, linearization:linearization_enum)->cls_discount_factor_curve_dict:
+        df_curve_dict = cls_discount_factor_curve_dict("DiscountRateCurveDict", self.today_date)
+
+        for ccy_label, mq_curve_iter in self.curve_dict.items():
+            df_curve_iter = mq_curve_iter.get_discount_factor_curve(linearization)
+            if ccy_label in df_curve_dict.curve_dict:
+                assert("ccy_name {ccy_name} is already in df_curve_dict".format(ccy_name=ccy_label))
+            df_curve_dict.curve_dict[ccy_label] = df_curve_iter
+
+        return df_curve_dict

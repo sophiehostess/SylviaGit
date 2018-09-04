@@ -435,7 +435,7 @@ class Test_create_swap_point_panel_by_market_quote(unittest.TestCase):
 
         usdphp_spot_rate = Rate.cls_fx_spot_rate(usdphp_pair, Rate.cls_tenor(datetime.date(2018, 8,24),datetime.date(2018,8,28)), 53.478)
 
-        swp_panel_usdphp = Rate.create_swap_point_panel_by_market_quote(usdphp_pair,usdphp_spot_rate, usd_mq_curve, php_mq_curve, Rate.linearization_enum.log_ds_factor, Rate.linearization_enum.log_ds_factor)
+        swp_panel_usdphp = Rate.create_swap_point_panel_by_market_quote_curves(usdphp_pair, usdphp_spot_rate, usd_mq_curve, php_mq_curve, Rate.linearization_enum.log_ds_factor, Rate.linearization_enum.log_ds_factor)
         #print("und spot shift is ", swp_panel_usdphp.df_curve_und_ccy.spot_date_shift)
 
         swp_panel_usdphp.refresh_swap_point_list()
