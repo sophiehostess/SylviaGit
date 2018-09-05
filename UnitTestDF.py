@@ -507,7 +507,7 @@ class Test_market_quote_curve_dict(unittest.TestCase):
 
         df_curve_dict = mq_curve_dict.get_discount_factor_curve_dict(Rate.linearization_enum.log_ds_factor)
 
-        df_curve_php = df_curve_dict.get_rate_curve_by_currency_label(php_ccy.label)
+        df_curve_php = df_curve_dict.get_curve_by_currency_label(php_ccy.label)
 
 
         df_on = df_curve_php.get_discount_factor_by_label("O/N")

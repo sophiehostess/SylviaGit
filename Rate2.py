@@ -1190,31 +1190,38 @@ def create_swap_point_panel_by_market_quote_curves(currency_pair: cls_currency_p
 
 class cls_rate_dict:
     def __init__(self ,
-                 today_date: datetime.date):
+                 today_date: datetime.date,
+                 curve_dict: dict=None):
         self.today_date = today_date
-        self.curve_dict = {}
+        self.curve_dict = {} if curve_dict is None else curve_dict
 
-    def get_rate_curve_by_currency_label(self, currency_label:str)->cls_discount_factor_curve:
+    def get_curve_by_currency_label(self, currency_label:str)->cls_discount_factor_curve:
         if currency_label in self.curve_dict:
             return self.curve_dict[currency_label]
         else:
             return None
 
-    def add_curve_to_dict(self, label:str, curve:cls_rate_curve):
+    def add_curve_to_dict(self, label:str, curve:cls_rate_curve)->None:
         self.curve_dict[label] = curve
+
+    def remove_curve_from_dict(self, label:str)->None:
+        del self.curve_dict[label]
+
+    def clear_dict(self, label:str)->None:
+        self.curve_dict.clear()
 
 
 class cls_discount_factor_curve_dict(cls_rate_dict):
     def get_swap_point_panel_by_currency_pair(self,currency_pair:cls_currency_pair, spot_rate:cls_fx_spot_rate)->cls_swap_point_panel:
 
         if currency_pair.base.label in self.curve_dict:
-            df_curve_base_ccy = self.get_rate_curve_by_currency_label(currency_pair.base.label)
+            df_curve_base_ccy = self.get_curve_by_currency_label(currency_pair.base.label)
         else:
             assert("currency {label} is not in dict".format(label=currency_pair.base.label))
             return None
 
         if currency_pair.underlying.label in self.curve_dict:
-            df_curve_und_ccy = self.get_rate_curve_by_currency_label(currency_pair.underlying.label)
+            df_curve_und_ccy = self.get_curve_by_currency_label(currency_pair.underlying.label)
         else:
             assert ("currency {label} is not in dict".format(label=currency_pair.underlying.label))
             return None
