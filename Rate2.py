@@ -254,8 +254,16 @@ class cls_single_currency_rate(cls_rate):
                  tenor: cls_tenor=None,
                  mid: float=0,
                  bid: float=0,
-                 ask: float=0):
+                 ask: float=0,
+                 basis: int=None):
         self.currency = currency
+
+        if basis is not None:
+            self.basis = basis
+        else:
+            self.basis = currency.number_of_days_1year
+
+
         super().__init__(tenor, mid, bid, ask)
         self.__unique_key = self.__get_unique_key()
 
@@ -274,9 +282,11 @@ class cls_discount_factor(cls_single_currency_rate):
         return cls_capitalized_factor(self.currency, self.tenor, 1 / self.mid)
 
     def get_discount_rate(self):
+
+        # to review
         return cls_discount_rate(
             self.currency, self.tenor, (1 / self.mid - 1) *
-                                       self.currency.number_of_days_1year / self.tenor.number_of_days)
+                                       self.basis / self.tenor.number_of_days)
 
     def get_remaining_df(self, df1, label: str=None):
 
@@ -330,7 +340,7 @@ class cls_capitalized_factor(cls_single_currency_rate):
 
     def get_discount_rate(self):
         return cls_discount_rate(
-            self.currency, self.tenor, (self.mid - 1) * self.currency.number_of_days_1year / self.tenor.number_of_days)
+            self.currency, self.tenor, (self.mid - 1) * self.basis / self.tenor.number_of_days)
 
 
 class cls_market_quote(cls_single_currency_rate):
@@ -379,11 +389,11 @@ class cls_discount_rate(cls_single_currency_rate):
     def get_discount_factor(self):
         return cls_discount_factor(
             self.currency, self.tenor,
-            1 / (1 + self.mid * self.tenor.number_of_days / self.currency.number_of_days_1year))
+            1 / (1 + self.mid * self.tenor.number_of_days / self.basis))
 
     def get_capitalized_factor(self):
         return cls_capitalized_factor(
-            self.currency, self.tenor, 1 + self.mid * self.currency.number_of_days_1year / self.tenor.number_of_days)
+            self.currency, self.tenor, 1 + self.mid * self.basis / self.tenor.number_of_days)
 
     def get_market_quote(self, discount_factor_today_spot: cls_discount_factor
                          ) -> cls_market_quote:
@@ -392,6 +402,8 @@ class cls_discount_rate(cls_single_currency_rate):
             number_of_days_today_to_maturity = self.tenor.number_of_days
             number_of_days_spot_to_maturity = number_of_days_today_to_maturity - discount_factor_today_spot.tenor.number_of_days
 
+
+            # to review
             market_quote_value = self.currency.number_of_days_1year * (
                 discount_factor_today_spot.mid *
                 (1 + self.mid * number_of_days_today_to_maturity / self.currency.number_of_days_1year) - 1
@@ -763,10 +775,15 @@ class cls_rate_curve:
 
 
 class cls_single_currency_rate_curve(cls_rate_curve):
-    def __init__(self, currency: cls_currency, fx_rate_list: list):
+    def __init__(self, currency: cls_currency, fx_rate_list: list, basis:int=None):
 
         super().__init__(fx_rate_list)
         self.currency = currency
+
+        if basis is not None:
+            self.basis = basis
+        else:
+            self.basis = currency.number_of_days_1year
 
     @property
     def spot_date_shift(self)->date_shift_enum:
@@ -1173,9 +1190,7 @@ def create_swap_point_panel_by_market_quote_curves(currency_pair: cls_currency_p
 
 class cls_rate_dict:
     def __init__(self ,
-                 dict_label: str ,
                  today_date: datetime.date):
-        self.label = dict_label
         self.today_date = today_date
         self.curve_dict = {}
 
@@ -1184,6 +1199,10 @@ class cls_rate_dict:
             return self.curve_dict[currency_label]
         else:
             return None
+
+    def add_curve_to_dict(self, label:str, curve:cls_rate_curve):
+        self.curve_dict[label] = curve
+
 
 class cls_discount_factor_curve_dict(cls_rate_dict):
     def get_swap_point_panel_by_currency_pair(self,currency_pair:cls_currency_pair, spot_rate:cls_fx_spot_rate)->cls_swap_point_panel:
@@ -1205,8 +1224,8 @@ class cls_discount_factor_curve_dict(cls_rate_dict):
 
 class cls_market_quote_curve_dict(cls_rate_dict):
 
-    def get_discount_rate_curve_dict(self, linearization:linearization_enum)->cls_discount_factor_curve_dict:
-        df_curve_dict = cls_discount_factor_curve_dict("DiscountRateCurveDict", self.today_date)
+    def get_discount_factor_curve_dict(self, linearization:linearization_enum)->cls_discount_factor_curve_dict:
+        df_curve_dict = cls_discount_factor_curve_dict(self.today_date)
 
         for ccy_label, mq_curve_iter in self.curve_dict.items():
             df_curve_iter = mq_curve_iter.get_discount_factor_curve(linearization)
