@@ -66,6 +66,10 @@ class cls_fx_trade:
     def price(self)->float:
         return self.contract_price.mid
 
+    @property
+    def currency_pair(self)->Rate.cls_currency_pair:
+        return self.contract_price.currency_pair
+
 
 
 class cls_spot_forward_trade(cls_fx_trade):

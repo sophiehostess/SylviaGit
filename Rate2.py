@@ -277,6 +277,10 @@ class cls_single_currency_rate(cls_rate):
     def unique_key(self):
         return self.__unique_key
 
+    @property
+    def currency_label(self):
+        return self.currency.label
+
 class cls_discount_factor(cls_single_currency_rate):
     def get_capitalized_factor(self):
         return cls_capitalized_factor(self.currency, self.tenor, 1 / self.mid)
@@ -508,6 +512,9 @@ class cls_currency_pair_rate(cls_rate):
     def unique_key(self):
         return self.__unique_key
 
+    @property
+    def maturity_date(self)->datetime.date:
+        return self.tenor.maturity_date
 
 
 class cls_fx_rate(cls_currency_pair_rate):
@@ -589,6 +596,7 @@ class cls_fx_rate(cls_currency_pair_rate):
                                      fx1_base_und.bid / fx2_base_und.ask)
 
 
+
 class cls_fx_spot_rate(cls_fx_rate):
     def __init__(self,
                  currency_pair: cls_currency_pair,
@@ -613,6 +621,13 @@ class cls_fx_spot_rate(cls_fx_rate):
             logger.critical("parameter quotation {quotation}is invalid.".format(quotation=quotation))
             return None
 
+    def get_discounted_spot_rate(self, base_ccy_df_t_s:cls_discount_factor, und_ccy_df_t_s:cls_discount_factor)->cls_fx_rate:
+        pass
+
+    @property
+    def spot_date(self)->datetime.date:
+        return self.tenor.maturity_date
+
 
 class cls_fx_forward_rate(cls_fx_rate):
     def __init__(self,
@@ -627,20 +642,27 @@ class cls_fx_forward_rate(cls_fx_rate):
         self.__swap_point = cls_swap_point(currency_pair, tenor, 0, 0, 0) #multiped by factor
 
     @property
+    def swap_point_factor(self)->float:
+        return self.currency_pair.swap_point_factor
+
+    @property
     def spot_rate(self)->cls_fx_spot_rate:
         return self.__spot_rate
 
+
+
+
     @spot_rate.setter
-    def spot_rate(self, spot_rate_value: cls_rate):
+    def spot_rate(self, spot_rate: cls_rate):
         self.__spot_rate.set_rate_by_mid_bid_ask(
-            spot_rate_value.mid, spot_rate_value.bid, spot_rate_value.ask)
+            spot_rate.mid, spot_rate.bid, spot_rate.ask)
         self.set_rate_by_mid_bid_ask(
-            spot_rate_value.mid +
-            self.__swap_point.mid / self.currency_pair.swap_point_factor,
-            spot_rate_value.bid +
-            self.__swap_point.bid / self.currency_pair.swap_point_factor,
-            spot_rate_value.ask +
-            self.__swap_point.ask / self.currency_pair.swap_point_factor)
+            spot_rate.mid +
+            self.__swap_point.mid / self.swap_point_factor,
+            spot_rate.bid +
+            self.__swap_point.bid / self.swap_point_factor,
+            spot_rate.ask +
+            self.__swap_point.ask / self.swap_point_factor)
 
     @property
     def swap_point_value_with_factor(self)->float:
@@ -649,7 +671,7 @@ class cls_fx_forward_rate(cls_fx_rate):
 
     @property
     def swap_point_value_in_unit(self)->float:
-        return self.__swap_point.mid / self.currency_pair.swap_point_factor
+        return self.__swap_point.mid / self.swap_point_factor
 
     @property
     def swap_point(self)->cls_fx_rate:
@@ -662,27 +684,48 @@ class cls_fx_forward_rate(cls_fx_rate):
             swap_point_with_factor.mid, swap_point_with_factor.bid, swap_point_with_factor.ask)
 
         self.set_rate_by_mid_bid_ask(
-            self.__spot_rate.mid + swap_point_with_factor.mid / self.currency_pair.swap_point_factor,
-            self.__spot_rate.bid + swap_point_with_factor.bid / self.currency_pair.swap_point_factor,
-            self.__spot_rate.ask + swap_point_with_factor.ask / self.currency_pair.swap_point_factor)
+            self.__spot_rate.mid + swap_point_with_factor.mid / self.swap_point_factor,
+            self.__spot_rate.bid + swap_point_with_factor.bid / self.swap_point_factor,
+            self.__spot_rate.ask + swap_point_with_factor.ask / self.swap_point_factor)
 
     def set_forward_rate_by_spot_and_df(
             self,
             spot_rate: cls_fx_spot_rate,
             base_ccy_df_s_m: cls_discount_factor, #base currency discount factor spot date to maturity date
-            underlying_ccy_df_s_m: cls_discount_factor): #underlying currency discount factor spot date to maturity date
+            und_ccy_df_s_m: cls_discount_factor): #underlying currency discount factor spot date to maturity date
 
         spot_rate_with_aligned_quotation_mode = spot_rate.get_fx_rate_by_quotation_mode(self.currency_pair.quotation_mode)
 
         # quotation is base-und
         if self.currency_pair.quotation_mode == quotation_mode_enum.base_und:
-            self.mid = self.currency_pair.swap_point_factor * spot_rate_with_aligned_quotation_mode.mid * (
-                base_ccy_df_s_m.mid / underlying_ccy_df_s_m.mid - 1)
+            self.mid = spot_rate_with_aligned_quotation_mode.mid * (base_ccy_df_s_m.mid / und_ccy_df_s_m.mid - 1)
 
         # quotation is und-base
         elif self.currency_pair.quotation_mode == quotation_mode_enum.und_base:
-            self.mid = self.currency_pair.swap_point_factor * spot_rate_with_aligned_quotation_mode.mid * (
-                underlying_ccy_df_s_m.mid / base_ccy_df_s_m.mid - 1)
+            self.mid = spot_rate_with_aligned_quotation_mode.mid * (und_ccy_df_s_m.mid / base_ccy_df_s_m.mid - 1)
+
+        self.spot_rate = spot_rate_with_aligned_quotation_mode
+        self.swap_point = cls_swap_point(self.currency_pair, self.tenor, (self.mid - spot_rate.mid) * self.swap_point_factor)
+
+
+    def set_forward_rate_by_discounted_spot_and_df(
+            self,
+            discounted_spot_rate: cls_fx_rate,
+            base_ccy_df_t_m: cls_discount_factor, #base currency discount factor spot date to maturity date
+            und_ccy_df_t_m: cls_discount_factor): #underlying currency discount factor spot date to maturity date
+
+        discounted_spot_rate_with_aligned_quotation_mode = discounted_spot_rate.get_fx_rate_by_quotation_mode(self.currency_pair.quotation_mode)
+
+        # quotation is base-und
+        if self.currency_pair.quotation_mode == quotation_mode_enum.base_und:
+            self.mid =  discounted_spot_rate_with_aligned_quotation_mode.mid * (base_ccy_df_t_m.mid / und_ccy_df_t_m.mid)
+
+        # quotation is und-base
+        elif self.currency_pair.quotation_mode == quotation_mode_enum.und_base:
+            self.mid = discounted_spot_rate_with_aligned_quotation_mode.mid * (und_ccy_df_t_m.mid / base_ccy_df_t_m.mid)
+
+        self.spot_rate = discounted_spot_rate_with_aligned_quotation_mode
+        self.swap_point = cls_swap_point(self.currency_pair, self.tenor, 0)
 
     def set_forward_rate_by_spot_and_swp(self,
                                          spot_rate: cls_fx_spot_rate,
@@ -1078,6 +1121,14 @@ class cls_swap_point_panel(cls_rate_curve):
     def swap_point_list(self)->list:
         return self.fx_rate_list
 
+    @property
+    def base_currency_label(self)->str:
+        return self.currency_pair.base.label
+
+    @property
+    def und_currency_label(self)->str:
+        return self.currency_pair.underlying.label
+
     def get_swap_point_from_list_by_tenor_label(self, label:str) -> cls_swap_point:
 
         for swap_point_iter in self.swap_point_list:
@@ -1207,7 +1258,7 @@ class cls_rate_dict:
     def remove_curve_from_dict(self, label:str)->None:
         del self.curve_dict[label]
 
-    def clear_dict(self, label:str)->None:
+    def clear_dict(self)->None:
         self.curve_dict.clear()
 
 
@@ -1238,6 +1289,8 @@ class cls_market_quote_curve_dict(cls_rate_dict):
             df_curve_iter = mq_curve_iter.get_discount_factor_curve(linearization)
             if ccy_label in df_curve_dict.curve_dict:
                 assert("ccy_name {ccy_name} is already in df_curve_dict".format(ccy_name=ccy_label))
+            else:
+                pass
             df_curve_dict.curve_dict[ccy_label] = df_curve_iter
 
         return df_curve_dict
