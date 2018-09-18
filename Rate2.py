@@ -95,14 +95,18 @@ class cls_currency_pair:
                  underlying: cls_currency,
                  quotation_mode: quotation_mode_enum,
                  swap_point_factor: int=10000,
-                 day_shift: int=2):
+                 day_shift: date_shift_enum = None):
         self.base = base
         self.underlying = underlying
 
         self.quotation_mode = quotation_mode
         self.swap_point_factor = swap_point_factor
 
-        self.day_shift = day_shift
+        if day_shift is None:
+            self.day_shift = base.spot_date_shift if base.spot_date_shift._value_ >= underlying.spot_date_shift._value_ else underlying.spot_date_shift
+        else:
+            self.day_shift = day_shift
+
         self.__quotation = ""
 
         if quotation_mode == quotation_mode_enum.base_und:
@@ -650,8 +654,6 @@ class cls_fx_forward_rate(cls_fx_rate):
         return self.__spot_rate
 
 
-
-
     @spot_rate.setter
     def spot_rate(self, spot_rate: cls_rate):
         self.__spot_rate.set_rate_by_mid_bid_ask(
@@ -698,14 +700,11 @@ class cls_fx_forward_rate(cls_fx_rate):
 
         # quotation is base-und
         if self.currency_pair.quotation_mode == quotation_mode_enum.base_und:
-            self.mid = spot_rate_with_aligned_quotation_mode.mid * (base_ccy_df_s_m.mid / und_ccy_df_s_m.mid - 1)
+            self.mid = spot_rate_with_aligned_quotation_mode.mid * (base_ccy_df_s_m.mid / und_ccy_df_s_m.mid )
 
         # quotation is und-base
         elif self.currency_pair.quotation_mode == quotation_mode_enum.und_base:
-            self.mid = spot_rate_with_aligned_quotation_mode.mid * (und_ccy_df_s_m.mid / base_ccy_df_s_m.mid - 1)
-
-        self.spot_rate = spot_rate_with_aligned_quotation_mode
-        self.swap_point = cls_swap_point(self.currency_pair, self.tenor, (self.mid - spot_rate.mid) * self.swap_point_factor)
+            self.mid = spot_rate_with_aligned_quotation_mode.mid * (und_ccy_df_s_m.mid / base_ccy_df_s_m.mid )
 
 
     def set_forward_rate_by_discounted_spot_and_df(
@@ -723,9 +722,6 @@ class cls_fx_forward_rate(cls_fx_rate):
         # quotation is und-base
         elif self.currency_pair.quotation_mode == quotation_mode_enum.und_base:
             self.mid = discounted_spot_rate_with_aligned_quotation_mode.mid * (und_ccy_df_t_m.mid / base_ccy_df_t_m.mid)
-
-        self.spot_rate = discounted_spot_rate_with_aligned_quotation_mode
-        self.swap_point = cls_swap_point(self.currency_pair, self.tenor, 0)
 
     def set_forward_rate_by_spot_and_swp(self,
                                          spot_rate: cls_fx_spot_rate,

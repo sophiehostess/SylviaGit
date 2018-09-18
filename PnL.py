@@ -146,13 +146,11 @@ class cls_fx_trade_eco_pnl(cls_fx_trade_acc_pnl):
 def create_trade_eco_pnl_by_today_value(trade: Trade.cls_fx_trade,
                                         pnl_ccy_df_t_m: Rate.cls_discount_factor,
                                         risk_ccy_df_t_m: Rate.cls_discount_factor,
-                                        discounted_spot_input: Rate.cls_fx_discounted_spot_rate,
+                                        discounted_spot: Rate.cls_fx_discounted_spot_rate,
                                         pnl_cal_date: datetime.date
                                        )->cls_fx_trade_eco_pnl:
 
-    discounted_spot = discounted_spot_input.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
-
-    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, trade.contract_price.tenor())
+    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, trade.contract_price.tenor)
 
     base_ccy_df_t_m =None
     und_ccy_df_t_m = None
@@ -170,6 +168,11 @@ def create_trade_eco_pnl_by_today_value(trade: Trade.cls_fx_trade,
     if (base_ccy_df_t_m is not None) and (und_ccy_df_t_m is not None):
         forward_rate.set_forward_rate_by_discounted_spot_and_df(discounted_spot, base_ccy_df_t_m, und_ccy_df_t_m)
 
+        # print("discounted_spot: {discounted_spot}".format(discounted_spot=discounted_spot.mid))
+        # print("base_ccy_df_t_m: {base_ccy_df_t_m}".format(base_ccy_df_t_m=base_ccy_df_t_m.mid))
+        # print("und_ccy_df_t_m: {und_ccy_df_t_m}".format(und_ccy_df_t_m=und_ccy_df_t_m.mid))
+        # print("forward_rate: {forward_rate}".format(forward_rate=forward_rate.mid))
+
         return cls_fx_trade_eco_pnl(trade, forward_rate,  pnl_ccy_df_t_m, pnl_cal_date)
 
     else:
@@ -180,13 +183,11 @@ def create_trade_eco_pnl_by_spot_value(trade: Trade.cls_fx_trade,
                                        pnl_ccy_df_s_m: Rate.cls_discount_factor,
                                        risk_ccy_df_s_m: Rate.cls_discount_factor,
                                        pnl_ccy_df_t_m: Rate.cls_discount_factor,
-                                       spot_rate_input: Rate.cls_fx_spot_rate,
+                                       spot_rate: Rate.cls_fx_spot_rate,
                                        pnl_cal_date: datetime.date
                                        )->cls_fx_trade_eco_pnl:
 
-    spot_rate = spot_rate_input.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
-
-    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, trade.contract_price.tenor())
+    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, trade.contract_price.tenor)
 
     base_ccy_df_s_m =None
     und_ccy_df_s_m = None
@@ -203,6 +204,12 @@ def create_trade_eco_pnl_by_spot_value(trade: Trade.cls_fx_trade,
 
     if (base_ccy_df_s_m is not None) and (und_ccy_df_s_m is not None):
         forward_rate.set_forward_rate_by_spot_and_df(spot_rate, base_ccy_df_s_m, und_ccy_df_s_m)
+
+        # print("discounted_spot: {discounted_spot}".format(discounted_spot=spot_rate.mid))
+        # print("base_ccy_df_t_m: {base_ccy_df_t_m}".format(base_ccy_df_t_m=spot_rate.mid))
+        # print("base_ccy_df_s_m: {base_ccy_df_s_m}".format(base_ccy_df_s_m=base_ccy_df_s_m.mid))
+        # print("und_ccy_df_s_m: {und_ccy_df_s_m}".format(und_ccy_df_s_m=und_ccy_df_s_m.mid))
+        # print("forward_rate: {forward_rate}".format(forward_rate=forward_rate.mid))
 
         return cls_fx_trade_eco_pnl(trade, forward_rate, pnl_ccy_df_t_m, pnl_cal_date)
 
@@ -230,7 +237,7 @@ def create_trade_eco_pnl_from_df_curves(trade: Trade.cls_fx_trade,
     risk_ccy_df_t_s = risk_ccy_df_curve.get_discount_factor_by_maturity_date(spot_date)
     risk_ccy_df_t_m = risk_ccy_df_curve.get_discount_factor_by_maturity_date(maturity_date)
 
-    risk_ccy_df_s_m = risk_ccy_df_t_m.get_remaining_df(pnl_ccy_df_t_s)
+    risk_ccy_df_s_m = risk_ccy_df_t_m.get_remaining_df(risk_ccy_df_t_s)
 
     return create_trade_eco_pnl_by_spot_value(trade, pnl_ccy_df_s_m, risk_ccy_df_s_m, pnl_ccy_df_t_m, spot_rate_input, pnl_cal_date)
 

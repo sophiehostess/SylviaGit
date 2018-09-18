@@ -26,7 +26,7 @@ class Test_cls_currency_pair(unittest.TestCase):
     def test_init(self):
         EUR= Rate.cls_currency("EUR")
         USD = Rate.cls_currency("USD")
-        EURUSD = Rate.cls_currency_pair(EUR,USD, Rate.quotation_mode_enum.base_und,1000, 2)
+        EURUSD = Rate.cls_currency_pair(EUR,USD, Rate.quotation_mode_enum.base_und,1000)
         self.assertEqual(EURUSD.quotation, "EUR-USD")
         self.assertEqual(EURUSD.quotation_mode, Rate.quotation_mode_enum.base_und)
         self.assertEqual(EURUSD.swap_point_factor, 1000)
@@ -314,7 +314,7 @@ class Test_cls_swap_point_panel(unittest.TestCase):
 
         self.assertEqual(round(df_sgd_20170725.mid,9), round(0.999174965538092,9))
 
-        usdsgd = Rate.cls_currency_pair(usd_ccy, sgd_ccy, Rate.quotation_mode_enum.base_und, 10000, 2)
+        usdsgd = Rate.cls_currency_pair(usd_ccy, sgd_ccy, Rate.quotation_mode_enum.base_und, 10000)
 
 
 
