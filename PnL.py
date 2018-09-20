@@ -79,7 +79,7 @@ class cls_fx_trade_acc_pnl(cls_fx_trade_pnl):
     def __get_accounting_pnl_value(self)->float:
 
         #convert all rates to base_und quotation mode
-        contract_price = self.trade.contract_price.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+        contract_price = self.trade.contract_price.get_deal_price_by_quotation_mode(Rate.quotation_mode_enum.base_und)
 
         if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base :
             und_ccy_notional = self.trade.und_ccy_notional
@@ -150,7 +150,7 @@ def create_trade_eco_pnl_by_today_value(trade: Trade.cls_fx_trade,
                                         pnl_cal_date: datetime.date
                                        )->cls_fx_trade_eco_pnl:
 
-    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, trade.contract_price.tenor)
+    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, Rate.cls_tenor(pnl_cal_date, trade.maturity_date))
 
     base_ccy_df_t_m =None
     und_ccy_df_t_m = None
@@ -187,7 +187,7 @@ def create_trade_eco_pnl_by_spot_value(trade: Trade.cls_fx_trade,
                                        pnl_cal_date: datetime.date
                                        )->cls_fx_trade_eco_pnl:
 
-    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, trade.contract_price.tenor)
+    forward_rate = Rate.cls_fx_forward_rate(trade.currency_pair, Rate.cls_tenor(pnl_cal_date, trade.maturity_date))
 
     base_ccy_df_s_m =None
     und_ccy_df_s_m = None
@@ -293,7 +293,7 @@ class cls_nsp_acc_pnl(cls_fx_trade_pnl):
     def __get_accounting_pnl_value(self)->float:
 
         #convert all rates to base_und quotation mode
-        contract_price = self.trade.contract_price.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+        contract_price = self.trade.contract_price.get_deal_price_by_quotation_mode(Rate.quotation_mode_enum.base_und)
 
         if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base :
             und_ccy_notional = self.trade.und_ccy_notional

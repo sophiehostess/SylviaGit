@@ -144,6 +144,15 @@ class cls_currency_pair:
         elif ccy1.label == self.underlying.label:
             return self.base
 
+    @property
+    def label(self)->str:
+        if self.quotation_mode == quotation_mode_enum.base_und:
+            return self.base.label + "/" + self.underlying.label
+        elif self.quotation_mode == quotation_mode_enum.und_base:
+            return self.underlying.label + "/" + self.base.label
+
+
+
 class cls_tenor:
     def __init__(self,
                  start_date: datetime.date,
@@ -172,11 +181,9 @@ class cls_tenor:
 
 class cls_rate:
     def __init__(self,
-                 tenor: cls_tenor=None,
                  mid: float=0,
                  bid: float=0,
                  ask: float=0):
-        self.tenor = tenor
         self.__mid = 0.0
         self.__bid = 0.0
         self.__ask = 0.0
@@ -217,7 +224,7 @@ class cls_rate:
         return self.__mid
 
     @mid.setter
-    def mid(self, mid):
+    def mid(self, mid:float):
         self.set_rate_by_mid_spread(mid, self.__spread)
 
     @property
@@ -225,7 +232,7 @@ class cls_rate:
         return self.__bid
 
     @bid.setter
-    def bid(self, bid):
+    def bid(self, bid:float):
         self.set_rate_by_bid_ask(bid, self.__ask)
 
     @property
@@ -233,7 +240,7 @@ class cls_rate:
         return self.__ask
 
     @ask.setter
-    def ask(self, ask):
+    def ask(self, ask:float):
         self.set_rate_by_bid_ask(self.__bid, ask)
 
     @property
@@ -241,7 +248,7 @@ class cls_rate:
         return self.__spread
 
     @spread.setter
-    def spread(self, spread):
+    def spread(self, spread:float):
         self.set_rate_by_mid_spread(self.__mid, spread)
 
     @property
@@ -249,7 +256,7 @@ class cls_rate:
         return self.__mid
 
     @value.setter
-    def value(self, value):
+    def value(self, value:float):
         self.set_rate_by_mid_spread(value, self.__spread)
 
 class cls_single_currency_rate(cls_rate):
@@ -261,6 +268,7 @@ class cls_single_currency_rate(cls_rate):
                  ask: float=0,
                  basis: int=None):
         self.currency = currency
+        self.tenor = tenor
 
         if basis is not None:
             self.basis = basis
@@ -268,7 +276,7 @@ class cls_single_currency_rate(cls_rate):
             self.basis = currency.number_of_days_1year
 
 
-        super().__init__(tenor, mid, bid, ask)
+        super().__init__(mid, bid, ask)
         self.__unique_key = self.__get_unique_key()
 
     def __get_unique_key(self)->str:
@@ -289,14 +297,14 @@ class cls_discount_factor(cls_single_currency_rate):
     def get_capitalized_factor(self):
         return cls_capitalized_factor(self.currency, self.tenor, 1 / self.mid)
 
-    def get_discount_rate(self):
+    def get_discount_rate(self)->cls_single_currency_rate:
 
         # to review
         return cls_discount_rate(
             self.currency, self.tenor, (1 / self.mid - 1) *
                                        self.basis / self.tenor.number_of_days)
 
-    def get_remaining_df(self, df1, label: str=None):
+    def get_remaining_df(self, df1, label: str=None)->cls_single_currency_rate:
 
         # assume self = df1 * df2
         # get df2
@@ -319,7 +327,7 @@ class cls_discount_factor(cls_single_currency_rate):
             logger.critical("parameter df1 tenor start data: %s maturity date: %s does not match current start date: %s maturity date: %s", df1.tenor.start_date, df1.tenor.maturity_date, self.tenor.start_date, self.tenor.maturity_date)
             return None
 
-    def extend_by_df(self, df1, label: str=None):
+    def extend_by_df(self, df1, label: str=None)->cls_single_currency_rate:
         # assume df2 = self * df1
         # get df2
 
@@ -346,14 +354,14 @@ class cls_capitalized_factor(cls_single_currency_rate):
     def get_discount_factor(self) -> cls_discount_factor:
         return cls_discount_factor(self.currency, self.tenor, 1 / self.mid)
 
-    def get_discount_rate(self):
+    def get_discount_rate(self)->cls_single_currency_rate:
         return cls_discount_rate(
             self.currency, self.tenor, (self.mid - 1) * self.basis / self.tenor.number_of_days)
 
 
 class cls_market_quote(cls_single_currency_rate):
     def get_discount_rate(self,
-                            discount_factor_today_spot: cls_discount_factor):
+                            discount_factor_today_spot: cls_discount_factor)->cls_single_currency_rate:
 
         if self.tenor.maturity_date > discount_factor_today_spot.tenor.maturity_date:
             number_of_days_spot_to_maturity = self.tenor.number_of_days
@@ -376,7 +384,7 @@ class cls_market_quote(cls_single_currency_rate):
             pass
 
     def get_discount_factor(self,
-                            discount_factor_today_spot: cls_discount_factor):
+                            discount_factor_today_spot: cls_discount_factor)->cls_discount_factor:
 
         if self.tenor.maturity_date > discount_factor_today_spot.tenor.maturity_date:
             number_of_days_spot_to_maturity = self.tenor.number_of_days
@@ -394,12 +402,12 @@ class cls_market_quote(cls_single_currency_rate):
             pass
 
 class cls_discount_rate(cls_single_currency_rate):
-    def get_discount_factor(self):
+    def get_discount_factor(self)->cls_discount_factor:
         return cls_discount_factor(
             self.currency, self.tenor,
             1 / (1 + self.mid * self.tenor.number_of_days / self.basis))
 
-    def get_capitalized_factor(self):
+    def get_capitalized_factor(self)->cls_capitalized_factor:
         return cls_capitalized_factor(
             self.currency, self.tenor, 1 + self.mid * self.basis / self.tenor.number_of_days)
 
@@ -495,6 +503,36 @@ class cls_on_funding_rate_panel():
                 break
         return result_dict
 
+
+
+class cls_deal_price(cls_rate):
+    def __init__(self,
+                 currency_pair: cls_currency_pair,
+                 maturity_date: datetime.date,
+                 value: float=0):
+        self.currency_pair = currency_pair
+        self.maturity_date = maturity_date
+        super().__init__(value, value, value)
+
+    @property
+    def value(self):
+        return self.mid
+
+    @value.setter
+    def value(self, value:float):
+        self.set_rate_by_mid_spread(value)
+
+
+    def get_deal_price_by_quotation_mode(self,quotation_mode: quotation_mode_enum):
+        if quotation_mode == self.currency_pair.quotation_mode:
+            return self
+        else:
+            return self.get_reversed_deal_price()
+
+    def get_reversed_deal_price(self)->cls_rate:
+        return cls_deal_price(self.currency_pair.get_reversed_pair(), self.maturity_date, 1/self.value)
+
+
 class cls_currency_pair_rate(cls_rate):
     def __init__(self,
                  currency_pair: cls_currency_pair,
@@ -503,7 +541,8 @@ class cls_currency_pair_rate(cls_rate):
                  bid: float=0,
                  ask: float=0):
         self.currency_pair = currency_pair
-        super().__init__(tenor, mid, bid, ask)
+        self.tenor = tenor
+        super().__init__(mid, bid, ask)
         self.__unique_key = self.__get_unique_key()
 
     def __get_unique_key(self)->str:
@@ -655,7 +694,7 @@ class cls_fx_forward_rate(cls_fx_rate):
 
 
     @spot_rate.setter
-    def spot_rate(self, spot_rate: cls_rate):
+    def spot_rate(self, spot_rate: cls_fx_rate):
         self.__spot_rate.set_rate_by_mid_bid_ask(
             spot_rate.mid, spot_rate.bid, spot_rate.ask)
         self.set_rate_by_mid_bid_ask(
@@ -676,12 +715,12 @@ class cls_fx_forward_rate(cls_fx_rate):
         return self.__swap_point.mid / self.swap_point_factor
 
     @property
-    def swap_point(self)->cls_fx_rate:
+    def swap_point(self)->cls_currency_pair_rate:
         return self.__swap_point
 
 
     @swap_point.setter
-    def swap_point(self, swap_point_with_factor: cls_rate):
+    def swap_point(self, swap_point_with_factor: cls_currency_pair_rate):
         self.set_rate_by_mid_bid_ask(
             swap_point_with_factor.mid, swap_point_with_factor.bid, swap_point_with_factor.ask)
 
@@ -725,7 +764,7 @@ class cls_fx_forward_rate(cls_fx_rate):
 
     def set_forward_rate_by_spot_and_swp(self,
                                          spot_rate: cls_fx_spot_rate,
-                                         swap_point: cls_rate):
+                                         swap_point: cls_currency_pair_rate):
         self.spot_rate = spot_rate
         self.swap_point = swap_point
 
@@ -741,7 +780,7 @@ class cls_fx_discounted_spot_rate(cls_fx_forward_rate):
         self.tenor.label = "TDY"
 
 
-class cls_swap_point(cls_fx_rate):
+class cls_swap_point(cls_currency_pair_rate):
     def __init__(self,
                  currency_pair: cls_currency_pair,
                  tenor: cls_tenor,

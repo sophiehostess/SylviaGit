@@ -30,7 +30,7 @@ class Test_cls_fx_trade_eco_pnl1(unittest.TestCase):
                                            ccy2_input = "EUR",
                                            ccy2_notional = 1000)
 
-        forward_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair, test_trade.contract_price.tenor,1.5)
+        forward_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair, Rate.cls_tenor(datetime.date(2017, 1, 17), datetime.date(2017,5,11)),1.5)
 
         acc_pnl = PnL.cls_fx_trade_acc_pnl(test_trade,
                                            forward_rate,
@@ -48,7 +48,7 @@ class Test_cls_fx_trade_eco_pnl1(unittest.TestCase):
 
         eco_pnl = PnL.cls_fx_trade_eco_pnl(test_trade,
                                            forward_rate,
-                                           Rate.cls_discount_factor(test_trade.contract_price.currency_pair.base, test_trade.contract_price.tenor,0.998),
+                                           Rate.cls_discount_factor(test_trade.contract_price.currency_pair.base, Rate.cls_tenor(datetime.date(2017, 1, 17), test_trade.maturity_date),0.998),
                                            datetime.date(2017, 1, 17)
                                            )
 
@@ -70,7 +70,7 @@ class Test_cls_fx_trade_eco_pnl2(unittest.TestCase):
                                            ccy2_notional=1000)
 
         forward_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair,
-                                                test_trade.contract_price.tenor, 1.5)
+                                                Rate.cls_tenor(datetime.date(2017, 1, 17), test_trade.maturity_date), 1.5)
 
         acc_pnl = PnL.cls_fx_trade_acc_pnl(test_trade,
                                            forward_rate,
@@ -83,7 +83,7 @@ class Test_cls_fx_trade_eco_pnl2(unittest.TestCase):
         eco_pnl = PnL.cls_fx_trade_eco_pnl(test_trade,
                                            forward_rate,
                                            Rate.cls_discount_factor(test_trade.contract_price.currency_pair.underlying,
-                                                                    test_trade.contract_price.tenor, 0.997),
+                                                                    Rate.cls_tenor(datetime.date(2017, 1, 17), test_trade.maturity_date), 0.997),
                                            datetime.date(2017, 1, 17)
                                            )
 
@@ -105,7 +105,7 @@ class Test_cls_nsp_acc_pnl(unittest.TestCase):
                                            ccy2_input="EUR",
                                            ccy2_notional=1000)
 
-        today_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair, test_trade.contract_price.tenor, 1.5)
+        today_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair, Rate.cls_tenor(datetime.date(2017, 5, 10), test_trade.maturity_date), 1.5)
 
         acc_pnl = PnL.cls_nsp_acc_pnl(test_trade,
                                       today_rate,
@@ -152,7 +152,7 @@ class Test_cls_nsp_eco_pnl(unittest.TestCase):
                                            ccy2_input="EUR",
                                            ccy2_notional=1000)
 
-        today_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair, test_trade.contract_price.tenor, 1.5)
+        today_rate = Rate.cls_fx_forward_rate(test_trade.contract_price.currency_pair, Rate.cls_tenor(datetime.date(2017, 10, 8), test_trade.maturity_date), 1.5)
 
         eco_pnl = PnL.cls_nsp_eco_pnl(test_trade,
                                       today_rate,

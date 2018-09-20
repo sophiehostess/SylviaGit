@@ -30,7 +30,7 @@ class Test_cls_currency_pair(unittest.TestCase):
         self.assertEqual(EURUSD.quotation, "EUR-USD")
         self.assertEqual(EURUSD.quotation_mode, Rate.quotation_mode_enum.base_und)
         self.assertEqual(EURUSD.swap_point_factor, 1000)
-        self.assertEqual(EURUSD.day_shift, 2)
+        self.assertEqual(EURUSD.day_shift, Rate.date_shift_enum.D2)
         self.assertTrue(isinstance(EURUSD, Rate.cls_currency_pair))
 
         USDEUR = EURUSD.get_reversed_pair()
@@ -58,20 +58,20 @@ class Test_cls_rate(unittest.TestCase):
 
     def test_init(self):
         one_month=Rate.cls_tenor(datetime.date(2016,12,17),datetime.date(2017,1,17), "1M")
-        RATE1= Rate.cls_rate(one_month,6.0,6.2,5.8)
+        RATE1= Rate.cls_rate(6.0,6.2,5.8)
         self.assertEqual(RATE1.mid,6.0)
         self.assertEqual(RATE1.bid,6.2)
         self.assertEqual(RATE1.ask,5.8)
         self.assertEqual(round(RATE1.spread,5),0.2)
 
-        RATE2= Rate.cls_rate(one_month)
+        RATE2= Rate.cls_rate()
         RATE2.set_rate_by_mid_spread(1.2,0.3)
         self.assertEqual(RATE2.mid,1.2)
         self.assertEqual(round(RATE2.bid,5),0.9)
         self.assertEqual(round(RATE2.ask,5),1.5)
         self.assertEqual(round(RATE2.spread,5),0.3)
 
-        RATE3= Rate.cls_rate(one_month)
+        RATE3= Rate.cls_rate()
         RATE3.set_rate_by_bid_ask(1200,1500)
         self.assertEqual(RATE3.mid,1350)
         self.assertEqual(round(RATE3.bid,5),1200)

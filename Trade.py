@@ -18,7 +18,8 @@ class cls_fx_trade:
                  counterparty: str=None,
                  portfolio: str=None,
                  product_type: product_type_enum=None,
-                 contract_price: Rate.cls_fx_rate=None,
+                 trade_date: datetime.date=None,
+                 contract_price: Rate.cls_deal_price=None,
                  base_ccy_notional: float=None,
                  und_ccy_notional: float=None):
 
@@ -26,6 +27,7 @@ class cls_fx_trade:
         self.counterparty = counterparty
         self.portfolio = portfolio
         self.product_type = product_type
+        self.trade_date = trade_date
         self.contract_price = contract_price
         self.base_ccy_notional = base_ccy_notional
         self.und_ccy_notional = und_ccy_notional
@@ -40,11 +42,7 @@ class cls_fx_trade:
 
     @property
     def maturity_date(self)->datetime.date:
-        return self.contract_price.tenor.maturity_date
-
-    @property
-    def trade_date(self)->datetime.date:
-        return self.contract_price.tenor.start_date
+        return self.contract_price.maturity_date
 
     @property
     def quotation_mode(self)->Rate.quotation_mode_enum:
@@ -56,7 +54,7 @@ class cls_fx_trade:
 
     @property
     def get_reversed_price(self)->float:
-        return 1/self.contract_price.mid
+        return 1/self.contract_price.value
 
     @property
     def get_reversed_quotation_mode(self)->Rate.quotation_mode_enum:
@@ -64,23 +62,26 @@ class cls_fx_trade:
 
     @property
     def price(self)->float:
-        return self.contract_price.mid
+        return self.contract_price.value
 
     @property
     def currency_pair(self)->Rate.cls_currency_pair:
         return self.contract_price.currency_pair
 
-
+    @property
+    def currency_pair_label(self)->str:
+        return self.contract_price.currency_pair.label
 
 class cls_spot_forward_trade(cls_fx_trade):
     def __init__(self,
                  trade_uti: str=None,
                  counterparty: str=None,
                  portfolio: str=None,
-                 contract_price: Rate.cls_fx_rate=None,
+                 trade_date: datetime.date=None,
+                 contract_price: Rate.cls_deal_price=None,
                  base_ccy_notional: float=None,
                  und_ccy_notional: float=None):
-        super().__init__(trade_uti, counterparty, portfolio, product_type_enum.fx_spot_forward, contract_price, base_ccy_notional, und_ccy_notional)
+        super().__init__(trade_uti, counterparty, portfolio, product_type_enum.fx_spot_forward, trade_date, contract_price, base_ccy_notional, und_ccy_notional)
 
 
 def create_fx_trade(trade_uti: str=None,
@@ -101,7 +102,6 @@ def create_fx_trade(trade_uti: str=None,
 
     ccy1_ = Rate.cls_currency(ccy1)
     ccy2_ = Rate.cls_currency(ccy2)
-    maturity = Rate.cls_tenor(trade_date,maturity_date)
 
 
     if base_ccy == ccy1 :
@@ -111,11 +111,11 @@ def create_fx_trade(trade_uti: str=None,
 
         if quotation == Rate.build_quotation(ccy1, ccy2):
             ccy_pair = Rate.cls_currency_pair(ccy1_, ccy2_, Rate.quotation_mode_enum.base_und)
-            fx_price = Rate.cls_fx_rate(ccy_pair,maturity, abs(ccy2_notional/ccy1_notional))
+            fx_price = Rate.cls_deal_price(ccy_pair,maturity_date, abs(ccy2_notional/ccy1_notional))
 
         elif quotation == Rate.build_quotation(ccy2, ccy1):
             ccy_pair = Rate.cls_currency_pair(ccy1_, ccy2_, Rate.quotation_mode_enum.und_base)
-            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, abs(ccy1_notional/ccy2_notional))
+            fx_price = Rate.cls_deal_price(ccy_pair, maturity_date, abs(ccy1_notional/ccy2_notional))
 
     elif base_ccy == ccy2 :
 
@@ -124,16 +124,22 @@ def create_fx_trade(trade_uti: str=None,
 
         if quotation == Rate.build_quotation(ccy1,ccy2):
             ccy_pair = Rate.cls_currency_pair(ccy2_, ccy1_, Rate.quotation_mode_enum.und_base)
-            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, abs(ccy2_notional/ccy1_notional))
+            fx_price = Rate.cls_deal_price(ccy_pair, maturity_date, abs(ccy2_notional/ccy1_notional))
 
         elif quotation == Rate.build_quotation(ccy2, ccy1):
             ccy_pair = Rate.cls_currency_pair(ccy2_, ccy1_, Rate.quotation_mode_enum.base_und)
-            fx_price = Rate.cls_fx_rate(ccy_pair, maturity, abs(ccy1_notional/ccy2_notional))
+            fx_price = Rate.cls_deal_price(ccy_pair, maturity_date, abs(ccy1_notional/ccy2_notional))
 
-    logger.info(
-        "contract price quotation_mode is {quotation_mode}. ".format(quotation_mode=str(ccy_pair.quotation_mode)))
+    else:
+        ccy_pair =None
+        fx_price = None
+        base_ccy_notional =None
+        und_ccy_notional = None
 
-    return cls_spot_forward_trade(trade_uti.upper().strip(),counterparty.upper().strip(), portfolio.upper().strip(),fx_price,base_ccy_notional,und_ccy_notional)
+
+    logger.info("contract price quotation_mode is {quotation_mode}. ".format(quotation_mode=str(ccy_pair.quotation_mode)))
+
+    return cls_spot_forward_trade(trade_uti.upper().strip(),counterparty.upper().strip(), portfolio.upper().strip(), trade_date,  fx_price, base_ccy_notional,und_ccy_notional)
 
 
 class simple_cash_flow():
@@ -144,3 +150,4 @@ class simple_cash_flow():
                  ):
         self.amount = amount
         self.payment_date = payment_date
+        self.currency = currency
