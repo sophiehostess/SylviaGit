@@ -301,6 +301,11 @@ class cls_single_currency_rate(cls_rate):
     def maturity_date(self):
         return self.tenor.maturity_date
 
+    @property
+    def label(self):
+        return self.tenor.label
+
+
 class cls_discount_factor(cls_single_currency_rate):
     def get_capitalized_factor(self):
         return cls_capitalized_factor(self.currency, self.tenor, 1 / self.mid)
@@ -378,7 +383,8 @@ class cls_market_quote(cls_single_currency_rate):
     def get_discount_rate(self,
                             discount_factor_today_spot: cls_discount_factor)->cls_single_currency_rate:
 
-        if self.tenor.maturity_date > discount_factor_today_spot.tenor.maturity_date:
+        # to be reviewed
+        if self.maturity_date > discount_factor_today_spot.maturity_date:
             number_of_days_spot_to_maturity = self.tenor.number_of_days
             number_of_days_today_to_maturity = discount_factor_today_spot.tenor.number_of_days + number_of_days_spot_to_maturity
 
@@ -388,33 +394,49 @@ class cls_market_quote(cls_single_currency_rate):
             ) / number_of_days_today_to_maturity
 
             return cls_discount_rate(self.currency,
-                                     cls_tenor(discount_factor_today_spot.tenor.start_date, self.tenor.maturity_date, self.tenor.label ),
+                                     cls_tenor(discount_factor_today_spot.start_date, self.maturity_date, self.tenor.label ),
                                      ds_rate_value)
 
 
-        if self.tenor.maturity_date == discount_factor_today_spot.tenor.maturity_date:
+        if self.maturity_date == discount_factor_today_spot.maturity_date:
             pass
 
-        if self.tenor.maturity_date < discount_factor_today_spot.tenor.maturity_date:
+        if self.maturity_date < discount_factor_today_spot.maturity_date:
             pass
 
+    # only applicable to maturity date <= 1Y
     def get_discount_factor(self,
                             discount_factor_today_spot: cls_discount_factor)->cls_discount_factor:
 
-        if self.tenor.maturity_date > discount_factor_today_spot.tenor.maturity_date:
+        if self.maturity_date > discount_factor_today_spot.maturity_date:
             number_of_days_spot_to_maturity = self.tenor.number_of_days
 
             ds_factor_value = discount_factor_today_spot.mid / (  1 + self.mid * number_of_days_spot_to_maturity / self.currency.number_of_days_1year)
 
             return cls_discount_factor(self.currency,
-                                     cls_tenor(discount_factor_today_spot.tenor.start_date, self.tenor.maturity_date, self.tenor.label),
+                                     cls_tenor(discount_factor_today_spot.start_date, self.maturity_date, self.tenor.label),
                                      ds_factor_value)
 
-        if self.tenor.maturity_date == discount_factor_today_spot.tenor.maturity_date:
+        if self.maturity_date == discount_factor_today_spot.maturity_date:
             pass
 
-        if self.tenor.maturity_date < discount_factor_today_spot.tenor.maturity_date:
+        if self.maturity_date < discount_factor_today_spot.maturity_date:
             pass
+
+    # only applicable to maturity date <= 1Y
+    def get_discount_factor_spot_maturity(self, ds_factor_value_input:float=None)->cls_discount_factor:
+
+        number_of_days_spot_to_maturity = self.tenor.number_of_days
+
+        if ds_factor_value_input is None:
+            ds_factor_value = 1 / (  1 + self.mid * number_of_days_spot_to_maturity / self.currency.number_of_days_1year)
+        else:
+            ds_factor_value = ds_factor_value_input
+
+        return cls_discount_factor(self.currency,
+                                 cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
+                                 ds_factor_value)
+
 
 class cls_discount_rate(cls_single_currency_rate):
     def get_discount_factor(self)->cls_discount_factor:
@@ -1099,19 +1121,91 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
             else:
                 return market_quote.get_discount_factor(self.get_discount_factor_today_spot())
 
+    def get_market_quote_backwardshift(self, input_tenor_label:str)->cls_market_quote:
+
+        mq_input_tenor = self.get_market_quote_by_label(input_tenor_label)
+        mq_1Y = self.get_market_quote_by_label('1Y')
+
+        # already with 1Y
+        if mq_input_tenor.maturity_date <= mq_1Y.maturity_date:
+            return mq_input_tenor
+
+        # greater than 1Y
+        else:
+            shifted_tenor_label = None
+            if input_tenor_label == "13M" :
+                shifted_tenor_label = "1M"
+            elif input_tenor_label == "14M" :
+                shifted_tenor_label = "2M"
+            elif input_tenor_label == "15M" :
+                shifted_tenor_label = "3M"
+            elif input_tenor_label == "16M" :
+                shifted_tenor_label = "4M"
+            elif input_tenor_label == "17M" :
+                shifted_tenor_label = "5M"
+            elif input_tenor_label == "18M" :
+                shifted_tenor_label = "6M"
+            elif input_tenor_label == "19M" :
+                shifted_tenor_label = "7M"
+            elif input_tenor_label == "20M" :
+                shifted_tenor_label = "8M"
+            elif input_tenor_label == "21M" :
+                shifted_tenor_label = "9M"
+            elif input_tenor_label == "22M" :
+                shifted_tenor_label = "10M"
+            elif input_tenor_label == "23M" :
+                shifted_tenor_label = "11M"
+            elif input_tenor_label == "2Y" :
+                shifted_tenor_label = "1Y"
+            elif input_tenor_label == "30M" :
+                shifted_tenor_label = "18M"
+            elif input_tenor_label == "3Y" :
+                shifted_tenor_label = "2Y"
+            elif input_tenor_label == "4Y" :
+                shifted_tenor_label = "3Y"
+            elif input_tenor_label == "5Y" :
+                shifted_tenor_label = "4Y"
+            elif input_tenor_label == "6Y" :
+                shifted_tenor_label = "5Y"
+            elif input_tenor_label == "7Y" :
+                shifted_tenor_label = "6Y"
+            elif input_tenor_label == "8Y" :
+                shifted_tenor_label = "7Y"
+            elif input_tenor_label == "9Y" :
+                shifted_tenor_label = "8Y"
+            elif input_tenor_label == "10Y" :
+                shifted_tenor_label = "9Y"
+
+            # to be enhanced
+            mq_backward_1Y_shifted = self.get_market_quote_by_label(shifted_tenor_label)
+            if mq_backward_1Y_shifted.maturity_date <= mq_1Y.maturity_date:
+                return mq_backward_1Y_shifted
+            else:
+                return self.get_market_quote_backwardshift(shifted_tenor_label)
+
+
     def get_discount_factor_curve(self, linearization:linearization_enum) -> cls_discount_factor_curve:
 
-        ds_factor_today_spot = self.get_discount_factor_today_spot()
+        discount_factor_today_spot = self.get_discount_factor_today_spot()
 
         ds_factor_list = []
+
+        market_quote_1Y = self.get_discount_factor_by_label('1Y')
 
         for market_quote_iter in self.fx_rate_list:
             if market_quote_iter.tenor.label == 'O/N':
                 discount_factor_iter = self.__get_discount_factor_on()
             elif market_quote_iter.tenor.label == 'T/N':
-                discount_factor_iter = ds_factor_today_spot
+                discount_factor_iter = discount_factor_today_spot
             else:
-                discount_factor_iter = market_quote_iter.get_discount_factor(ds_factor_today_spot)
+
+                if market_quote_iter.maturity_date <= market_quote_1Y.maturity_date :
+                    discount_factor_iter = market_quote_iter.get_discount_factor(discount_factor_today_spot)
+                else:
+
+                    market_quote_backwardshifted_within_1Y = self.get_market_quote_backwardshift(market_quote_iter.label)
+
+                    discount_factor_iter = get_discounted_factor_today_maturity_from_market_quote_over_1Y(discount_factor_today_spot, market_quote_backwardshifted_within_1Y, market_quote_iter)
 
             ds_factor_list.append(discount_factor_iter)
 
@@ -1140,6 +1234,50 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
     @property
     def last_item(self)->cls_market_quote:
         return self.fx_rate_list[-1]
+
+
+def get_discounted_factor_spot_maturity_from_market_quote_over_1Y(discount_factor_spot_backwardshifteddate:cls_discount_factor, market_quote_spot_maturity:cls_market_quote)->cls_discount_factor:
+    #                                                       |<-----------------1 year--------->|
+    # |-------------------|---------------------------------|-------------------------|--------|-------------------time axis--->
+    # today-----------spot date------------intermediate interest payment date -------1Y------maturity date
+
+
+    # for easy calculation only , any positive amount is workable. Not refects in the result.
+    virtual_principal = 1000000
+
+    cash_flow_principal_spot_date = virtual_principal
+    cash_flow_principal_maturity = -1 * virtual_principal
+
+    # duration is spot to intermediate interest payment date
+    cash_flow_intermediate_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * discount_factor_spot_backwardshifteddate.tenor.number_of_days / discount_factor_spot_backwardshifteddate.basis)
+
+    discounted_cash_flow_intermediate_interest = cash_flow_intermediate_interest * discount_factor_spot_backwardshifteddate.value
+
+    # including principal and maturity payment
+    discounted_cash_flow_maturity = 0 - cash_flow_principal_spot_date - discounted_cash_flow_intermediate_interest
+
+    # duration is intermediate interest payment date to maturity date
+    # equal to (spot date to maturity date minus spot date to intermediate interest payment date)
+    cash_flow_maturity_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * (market_quote_spot_maturity.tenor.number_of_days - discount_factor_spot_backwardshifteddate.tenor.number_of_days) / discount_factor_spot_backwardshifteddate.basis)
+
+    discount_factor_spot_maturity_value = discounted_cash_flow_maturity / (cash_flow_maturity_interest + cash_flow_principal_maturity)
+
+    discount_factor_spot_maturity = market_quote_spot_maturity.get_discount_factor_spot_maturity(discount_factor_spot_maturity_value)
+
+    return discount_factor_spot_maturity
+
+
+
+def get_discounted_factor_today_maturity_from_market_quote_over_1Y(discount_factor_today_spot:cls_discount_factor,
+                                                                   market_quote_spot_backwardshifteddate:cls_market_quote,
+                                                                   market_quote_spot_maturity:cls_market_quote)->cls_discount_factor:
+    discount_factor_spot_interpayment = market_quote_spot_backwardshifteddate.get_discount_factor_spot_maturity()
+
+    discount_factor_spot_maturity = get_discounted_factor_spot_maturity_from_market_quote_over_1Y(discount_factor_spot_interpayment, market_quote_spot_maturity)
+
+    discount_factor_today_maturity = discount_factor_today_spot.extend_by_df(discount_factor_spot_maturity, discount_factor_spot_maturity.label)
+
+    return discount_factor_today_maturity
 
 
 class cls_swap_point_panel(cls_rate_curve):
