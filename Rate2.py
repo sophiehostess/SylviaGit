@@ -1121,12 +1121,13 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
             else:
                 return market_quote.get_discount_factor(self.get_discount_factor_today_spot())
 
-    def get_market_quote_backwardshift(self, input_tenor_label:str)->cls_market_quote:
+
+    def get_market_quote_backwardshifted(self, input_tenor_label:str)->cls_market_quote:
 
         mq_input_tenor = self.get_market_quote_by_label(input_tenor_label)
         mq_1Y = self.get_market_quote_by_label('1Y')
 
-        # already with 1Y
+        # already within 1Y
         if mq_input_tenor.maturity_date <= mq_1Y.maturity_date:
             return mq_input_tenor
 
@@ -1181,7 +1182,77 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
             if mq_backward_1Y_shifted.maturity_date <= mq_1Y.maturity_date:
                 return mq_backward_1Y_shifted
             else:
-                return self.get_market_quote_backwardshift(shifted_tenor_label)
+                return self.get_market_quote_backwardshifted(shifted_tenor_label)
+
+
+    def get_market_quote_list_backwardshifted(self, input_tenor_label:str, market_quote_list_input:list=None)->list:
+
+        mq_input_tenor = self.get_market_quote_by_label(input_tenor_label)
+        mq_1Y = self.get_market_quote_by_label('1Y')
+        if market_quote_list_input is not None :
+            mq_result_list = market_quote_list_input
+        else:
+            mq_result_list = []
+
+        # already within 1Y
+        if mq_input_tenor.maturity_date <= mq_1Y.maturity_date:
+            return [mq_input_tenor]
+
+        # greater than 1Y
+        else:
+            shifted_tenor_label = None
+            if input_tenor_label == "13M" :
+                shifted_tenor_label = "1M"
+            elif input_tenor_label == "14M" :
+                shifted_tenor_label = "2M"
+            elif input_tenor_label == "15M" :
+                shifted_tenor_label = "3M"
+            elif input_tenor_label == "16M" :
+                shifted_tenor_label = "4M"
+            elif input_tenor_label == "17M" :
+                shifted_tenor_label = "5M"
+            elif input_tenor_label == "18M" :
+                shifted_tenor_label = "6M"
+            elif input_tenor_label == "19M" :
+                shifted_tenor_label = "7M"
+            elif input_tenor_label == "20M" :
+                shifted_tenor_label = "8M"
+            elif input_tenor_label == "21M" :
+                shifted_tenor_label = "9M"
+            elif input_tenor_label == "22M" :
+                shifted_tenor_label = "10M"
+            elif input_tenor_label == "23M" :
+                shifted_tenor_label = "11M"
+            elif input_tenor_label == "2Y" :
+                shifted_tenor_label = "1Y"
+            elif input_tenor_label == "30M" :
+                shifted_tenor_label = "18M"
+            elif input_tenor_label == "3Y" :
+                shifted_tenor_label = "2Y"
+            elif input_tenor_label == "4Y" :
+                shifted_tenor_label = "3Y"
+            elif input_tenor_label == "5Y" :
+                shifted_tenor_label = "4Y"
+            elif input_tenor_label == "6Y" :
+                shifted_tenor_label = "5Y"
+            elif input_tenor_label == "7Y" :
+                shifted_tenor_label = "6Y"
+            elif input_tenor_label == "8Y" :
+                shifted_tenor_label = "7Y"
+            elif input_tenor_label == "9Y" :
+                shifted_tenor_label = "8Y"
+            elif input_tenor_label == "10Y" :
+                shifted_tenor_label = "9Y"
+
+            # to be enhanced
+            mq_1Y_backwardshifted = self.get_market_quote_by_label(shifted_tenor_label)
+            mq_result_list.append(mq_1Y_backwardshifted)
+            if mq_1Y_backwardshifted.maturity_date <= mq_1Y.maturity_date:
+                mq_result_list.reverse()
+                return mq_result_list
+            else:
+                return self.get_market_quote_list_backwardshifted(shifted_tenor_label, mq_result_list)
+
 
 
     def get_discount_factor_curve(self, linearization:linearization_enum) -> cls_discount_factor_curve:
@@ -1201,11 +1272,13 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
 
                 if market_quote_iter.maturity_date <= market_quote_1Y.maturity_date :
                     discount_factor_iter = market_quote_iter.get_discount_factor(discount_factor_today_spot)
+
                 else:
 
-                    market_quote_backwardshifted_within_1Y = self.get_market_quote_backwardshift(market_quote_iter.label)
+                    #market_quote_backwardshifted_within_1Y = self.get_market_quote_backwardshifted(market_quote_iter.label)
+                    market_quote_list_backwardshifted = self.get_market_quote_list_backwardshifted(market_quote_iter.label)
 
-                    discount_factor_iter = get_discounted_factor_today_maturity_from_market_quote_over_1Y(discount_factor_today_spot, market_quote_backwardshifted_within_1Y, market_quote_iter)
+                    discount_factor_iter = get_discounted_factor_today_maturity_from_market_quote_over_1Ys(discount_factor_today_spot, market_quote_list_backwardshifted, market_quote_iter)
 
             ds_factor_list.append(discount_factor_iter)
 
@@ -1242,7 +1315,7 @@ def get_discounted_factor_spot_maturity_from_market_quote_over_1Y(discount_facto
     # today-----------spot date------------intermediate interest payment date -------1Y------maturity date
 
 
-    # for easy calculation only , any positive amount is workable. Not refects in the result.
+    # for easy calculation only , any positive amount is workable. Not refecting in  result.
     virtual_principal = 1000000
 
     cash_flow_principal_spot_date = virtual_principal
@@ -1268,9 +1341,12 @@ def get_discounted_factor_spot_maturity_from_market_quote_over_1Y(discount_facto
 
 
 
+
 def get_discounted_factor_today_maturity_from_market_quote_over_1Y(discount_factor_today_spot:cls_discount_factor,
                                                                    market_quote_spot_backwardshifteddate:cls_market_quote,
-                                                                   market_quote_spot_maturity:cls_market_quote)->cls_discount_factor:
+                                                                   market_quote_spot_maturity:cls_market_quote
+                                                                  )->cls_discount_factor:
+    # backward shift date is the interpayment date
     discount_factor_spot_interpayment = market_quote_spot_backwardshifteddate.get_discount_factor_spot_maturity()
 
     discount_factor_spot_maturity = get_discounted_factor_spot_maturity_from_market_quote_over_1Y(discount_factor_spot_interpayment, market_quote_spot_maturity)
@@ -1278,6 +1354,84 @@ def get_discounted_factor_today_maturity_from_market_quote_over_1Y(discount_fact
     discount_factor_today_maturity = discount_factor_today_spot.extend_by_df(discount_factor_spot_maturity, discount_factor_spot_maturity.label)
 
     return discount_factor_today_maturity
+
+
+
+def get_discounted_factor_spot_maturity_from_market_quote_over_1Ys(discount_factor_list_spot_backwardshifteddate:list, market_quote_spot_maturity:cls_market_quote)->cls_discount_factor:
+    #                                                            |<-----------------1 year------------>|<--------------------1 year--------->|
+    # |-------------------|--------------------------------------|-------------------|-----------------|----------------------------|--------|-------------------time axis--->
+    # today-----------spot date----------intermediate interest payment date1--------1Y---intermediate interest payment date2-------2Y------maturity date
+
+
+    # for easy calculation only , any positive amount is workable. Not refecting in result.
+    virtual_principal = 1000000
+
+    cash_flow_spot_date_principal = virtual_principal
+    cash_flow_maturity_principal = -1 * virtual_principal
+
+    # sum up the intermediate discounted interest payment
+    discounted_cash_flow_intermediate_interest_sum = 0
+
+    for discount_factor_spot_backwardshifteddate in discount_factor_list_spot_backwardshifteddate :
+        # duration is spot to intermediate interest payment date
+        cash_flow_intermediate_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * discount_factor_spot_backwardshifteddate.tenor.number_of_days / discount_factor_spot_backwardshifteddate.basis)
+
+        # get the discounted amount of the cash flow , discounted from intermediate payment date to spot date.
+        discounted_cash_flow_intermediate_interest = cash_flow_intermediate_interest * discount_factor_spot_backwardshifteddate.value
+
+
+        discounted_cash_flow_intermediate_interest_sum = discounted_cash_flow_intermediate_interest_sum + discounted_cash_flow_intermediate_interest
+
+    # including principal and maturity payment
+    discounted_cash_flow_maturity = 0 - cash_flow_spot_date_principal - discounted_cash_flow_intermediate_interest_sum
+
+    # duration is the last intermediate interest payment date to maturity date
+    # equal to ( spot date to maturity date   MINUS   spot date to last intermediate interest payment date  )
+    discount_factor_spot_lastinterpayment = discount_factor_list_spot_backwardshifteddate[-1]
+
+    cash_flow_maturity_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * (market_quote_spot_maturity.tenor.number_of_days - discount_factor_spot_lastinterpayment.tenor.number_of_days) / discount_factor_spot_lastinterpayment.basis)
+
+    discount_factor_spot_maturity_value = discounted_cash_flow_maturity / (cash_flow_maturity_interest + cash_flow_maturity_principal)
+
+    discount_factor_spot_maturity = market_quote_spot_maturity.get_discount_factor_spot_maturity(discount_factor_spot_maturity_value)
+
+    return discount_factor_spot_maturity
+
+
+def get_discounted_factor_today_maturity_from_market_quote_over_1Ys(discount_factor_today_spot:cls_discount_factor,
+                                                                    market_quote_list_spot_backwardshifteddate:list,
+                                                                    market_quote_spot_maturity:cls_market_quote
+                                                                   )->cls_discount_factor:
+    discount_factor_list =[]
+
+    market_quote_list = market_quote_list_spot_backwardshifteddate + [market_quote_spot_maturity]
+
+    #market_quote_spot_backwardshifteddate_iter = cls_market_quote()
+
+    for i in range(len(market_quote_list) - 1):
+        if i == 0:
+            # assume the first one is within 1Y
+            market_quote_spot_backwardshifteddate_iter = market_quote_list[i]
+            discount_factor_spot_backwardshifteddate_iter = market_quote_spot_backwardshifteddate_iter.get_discount_factor_spot_maturity()
+            discount_factor_list.append(discount_factor_spot_backwardshifteddate_iter)
+
+        else:
+            pass
+
+        # the next payment date as iterated maturity date
+        market_quote_spot_next_backwardshifteddate_iter = market_quote_list[i + 1]
+
+        discount_factor_spot_maturity_iter = get_discounted_factor_spot_maturity_from_market_quote_over_1Ys(discount_factor_list, market_quote_spot_next_backwardshifteddate_iter)
+
+        # add result to discount factor list
+        discount_factor_list.append(discount_factor_spot_maturity_iter)
+
+    else:
+        discount_factor_spot_maturity = discount_factor_list[-1]
+        discount_factor_today_maturity = discount_factor_today_spot.extend_by_df(discount_factor_spot_maturity, discount_factor_spot_maturity.label)
+
+    return discount_factor_today_maturity
+
 
 
 class cls_swap_point_panel(cls_rate_curve):

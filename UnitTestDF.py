@@ -907,8 +907,27 @@ class Test_get_discounted_factor_from_market_quote_over_1Y_2(unittest.TestCase):
         self.assertEqual(round(df_today_maturity.mid, 9), round(0.984794530399031, 9))
 
 
+class Test_get_discounted_factor_spot_maturity_from_market_quote_over_1Ys(unittest.TestCase):
+
+    def test_init(self):
+        spot_date = datetime.date(2016, 9, 7)
+        interpayment_date = datetime.date(2017, 3, 7)
+        maturity_date = datetime.date(2018, 3, 7)
+
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
+
+        df_spot_interpayment = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(spot_date, interpayment_date, "6M"), 0.995536183)
+        market_quote_spot_maturity = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(spot_date, maturity_date, "18M"),  1.011792604/100)
+
+        df_spot_maturity = Rate.get_discounted_factor_spot_maturity_from_market_quote_over_1Ys([df_spot_interpayment], market_quote_spot_maturity)
+
+        #print("df_spot_maturity={df_spot_maturity}".format(df_spot_maturity=df_spot_maturity.value))
+        self.assertEqual(round(df_spot_maturity.mid, 9), round(0.984832779, 9))
+
+
 class Test_get_discount_factor_curve_from_market_quote_curve_dict(unittest.TestCase):
     def test_init(self):
+
         usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
         mq_usd_ON = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,24),datetime.date(2018,8,27),"O/N"),2.25464634/100)
         mq_usd_TN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,27),datetime.date(2018,8,28),"T/N"),2.254506667/100)
@@ -961,3 +980,45 @@ class Test_get_discount_factor_curve_from_market_quote_curve_dict(unittest.TestC
 
         df_2Y = usd_df_curve.get_discount_factor_by_label("2Y")
         self.assertEqual(round(df_2Y.mid, 9), round(0.9456441548, 9))
+
+
+
+class Test_get_market_quote_list_backwardshifted(unittest.TestCase):
+    def test_init(self):
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
+        mq_usd_ON = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,24),datetime.date(2018,8,27),"O/N"),2.25464634/100)
+        mq_usd_TN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,27),datetime.date(2018,8,28),"T/N"),2.254506667/100)
+        mq_usd_SN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,8,29),"S/N"),2.54503811/100)
+        mq_usd_1W = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,4),"1W"),2.246456453/100)
+        mq_usd_2W = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,11),"2W"),2.248441218/100)
+        mq_usd_1M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,9,28),"1M"),2.25491505/100)
+        mq_usd_2M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,10,29),"2M"),2.274258118/100)
+        mq_usd_3M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2018,11,28),"3M"),2.309720822/100)
+        mq_usd_6M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,2,28),"6M"),2.433666541/100)
+        mq_usd_9M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,5,28),"9M"),2.535959205/100)
+        mq_usd_1Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8,28),datetime.date(2019,8,28),"1Y"),2.622098069/100)
+
+        mq_usd_18M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8, 28), datetime.date(2020, 2, 28), "18M"), 2.722778208 / 100)
+        mq_usd_2Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8, 28), datetime.date(2020, 8, 28), "2Y"), 2.776357766 / 100)
+        mq_usd_30M = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8, 28), datetime.date(2021, 2, 28), "30M"), 2.303030 / 100)
+        mq_usd_3Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8, 28), datetime.date(2021, 8, 28), "3Y"), 2.3333 / 100)
+        mq_usd_4Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2018, 8, 28), datetime.date(2022, 8, 28), "4Y"), 2.4444 / 100)
+
+
+        usd_mq_curve = Rate.cls_market_quote_curve(usd_ccy, [mq_usd_ON, mq_usd_TN, mq_usd_SN, mq_usd_1W, mq_usd_2W, mq_usd_1M, mq_usd_2M, mq_usd_3M, mq_usd_6M, mq_usd_9M, mq_usd_1Y, mq_usd_18M, mq_usd_2Y, mq_usd_30M, mq_usd_3Y, mq_usd_4Y])
+
+        result_list = usd_mq_curve.get_market_quote_list_backwardshifted("4Y", [])
+
+        # for mq_iter in result_list:
+        #     print(mq_iter.label)
+
+        self.assertEqual(result_list[0].label, "1Y")
+        self.assertEqual(result_list[1].label, "2Y")
+        self.assertEqual(result_list[2].label, "3Y")
+
+
+        result_list1 = usd_mq_curve.get_market_quote_list_backwardshifted("30M", [])
+
+        self.assertEqual(result_list1[0].label, "6M")
+        self.assertEqual(result_list1[1].label, "18M")
+
