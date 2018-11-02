@@ -1372,15 +1372,18 @@ def get_discounted_factor_spot_maturity_from_market_quote_over_1Ys(discount_fact
     # sum up the intermediate discounted interest payment
     discounted_cash_flow_intermediate_interest_sum = 0
 
+    aggregated_days = 0
+
     for discount_factor_spot_backwardshifteddate in discount_factor_list_spot_backwardshifteddate :
-        # duration is spot to intermediate interest payment date
-        cash_flow_intermediate_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * discount_factor_spot_backwardshifteddate.tenor.number_of_days / discount_factor_spot_backwardshifteddate.basis)
+        # duration is last intermediate payment date  to current intermediate payment date
+        cash_flow_intermediate_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * (discount_factor_spot_backwardshifteddate.tenor.number_of_days - aggregated_days )/ discount_factor_spot_backwardshifteddate.basis)
 
         # get the discounted amount of the cash flow , discounted from intermediate payment date to spot date.
         discounted_cash_flow_intermediate_interest = cash_flow_intermediate_interest * discount_factor_spot_backwardshifteddate.value
 
 
         discounted_cash_flow_intermediate_interest_sum = discounted_cash_flow_intermediate_interest_sum + discounted_cash_flow_intermediate_interest
+        aggregated_days = discount_factor_spot_backwardshifteddate.tenor.number_of_days
 
     # including principal and maturity payment
     discounted_cash_flow_maturity = 0 - cash_flow_spot_date_principal - discounted_cash_flow_intermediate_interest_sum
@@ -1412,6 +1415,8 @@ def get_discounted_factor_today_maturity_from_market_quote_over_1Ys(discount_fac
         if i == 0:
             # assume the first one is within 1Y
             market_quote_spot_backwardshifteddate_iter = market_quote_list[i]
+
+            # for the market quote within 1Y, discount factor could be calculated directly.
             discount_factor_spot_backwardshifteddate_iter = market_quote_spot_backwardshifteddate_iter.get_discount_factor_spot_maturity()
             discount_factor_list.append(discount_factor_spot_backwardshifteddate_iter)
 

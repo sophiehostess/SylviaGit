@@ -240,6 +240,49 @@ class Test_cls_market_quote_curve(unittest.TestCase):
         self.assertEqual(round(df_1Y.mid, 9), round(0.9738593315, 9))
 
 
+
+class Test_cls_market_quote_curve_over1Ys(unittest.TestCase):
+    def test_init(self):
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
+        mq_ON = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,1),datetime.date(2016,9,2),"O/N"),0.699101474/100)
+        mq_TN = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,2),datetime.date(2016,9,6),"T/N"),0.699087898/100)
+        mq_1Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,6),datetime.date(2017,9,6),"1Y"),0.961456991/100)
+        mq_2Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,6),datetime.date(2018,9,6),"2Y"),1.046697823/100)
+        mq_3Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,6),datetime.date(2019,9,6),"3Y"),1.109205635/100)
+        mq_4Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,6),datetime.date(2020,9,8),"4Y"),1.164489433/100)
+        mq_5Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,6),datetime.date(2021,9,7),"5Y"),1.215669606/100)
+        mq_6Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(datetime.date(2016, 9,6),datetime.date(2022,9,6),"6Y"),1.268288701/100)
+
+        usd_mq_curve = Rate.cls_market_quote_curve(usd_ccy, [mq_ON, mq_TN, mq_1Y, mq_2Y, mq_3Y, mq_4Y, mq_5Y, mq_6Y])
+
+        df_on = usd_mq_curve.get_discount_factor_by_label('O/N')
+        self.assertEqual(round(df_on.mid, 9), round(0.99998058089172, 9))
+
+        df_tn = usd_mq_curve.get_discount_factor_by_label('T/N')
+        self.assertEqual(round(df_tn.mid, 9), round(0.999902912000058, 9))
+
+        df_1Y = mq_1Y.get_discount_factor(df_tn)
+        self.assertEqual(round(df_1Y.mid, 9), round(0.990249851870478, 9))
+
+        usd_df_curve = usd_mq_curve.get_discount_factor_curve(Rate.linearization_enum.log_ds_factor)
+        df_1Y = usd_df_curve.get_discount_factor_by_label("1Y")
+        self.assertEqual(round(df_1Y.mid, 9), round(0.990249851870478, 9))
+
+        df_2Y = usd_df_curve.get_discount_factor_by_label("2Y")
+        self.assertEqual(round(df_2Y.mid, 9), round(0.979004489920685, 9))
+
+        df_3Y = usd_df_curve.get_discount_factor_by_label("3Y")
+        self.assertEqual(round(df_3Y.mid, 9), round(0.96688278302637, 9))
+
+        df_4Y = usd_df_curve.get_discount_factor_by_label("4Y")
+        self.assertEqual(round(df_4Y.mid, 9), round(0.953882330105055, 9))
+
+        df_5Y = usd_df_curve.get_discount_factor_by_label("5Y")
+        self.assertEqual(round(df_5Y.mid, 9), round(0.940301718559668, 9))
+
+        df_6Y = usd_df_curve.get_discount_factor_by_label("6Y")
+        self.assertEqual(round(df_6Y.mid, 9), round(0.925849027816251, 9))
+
 class Test_cls_discount_factor_curve_log_ds_factor(unittest.TestCase):
     def test_init(self):
         usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
@@ -923,6 +966,78 @@ class Test_get_discounted_factor_spot_maturity_from_market_quote_over_1Ys(unitte
 
         #print("df_spot_maturity={df_spot_maturity}".format(df_spot_maturity=df_spot_maturity.value))
         self.assertEqual(round(df_spot_maturity.mid, 9), round(0.984832779, 9))
+
+
+class Test_get_discounted_factor_spot_maturity_from_market_quote_over_1Ys_2(unittest.TestCase):
+
+    def test_init(self):
+        today_date = datetime.date(2017, 1, 12)
+        spot_date = datetime.date(2017, 1, 17)
+        X1Y_date = datetime.date(2018, 1, 17)
+        X2Y_date = datetime.date(2019, 1, 17)
+        X3Y_date = datetime.date(2020, 1, 17)
+
+        eur_ccy = Rate.cls_currency("EUR", 360, Rate.date_shift_enum.D2)
+
+        df_today_spot = Rate.cls_discount_factor(eur_ccy, Rate.cls_tenor(today_date, spot_date, "T/N"), 1.00006123728959)
+
+        df_spot_1Y = Rate.cls_discount_factor(eur_ccy, Rate.cls_tenor(spot_date, X1Y_date, "1Y"), 1.00741817707331/df_today_spot.mid)
+        df_spot_2Y = Rate.cls_discount_factor(eur_ccy, Rate.cls_tenor(spot_date, X2Y_date, "2Y"), 1.01417392683201/df_today_spot.mid)
+        market_quote_spot_3Y = Rate.cls_market_quote(eur_ccy, Rate.cls_tenor(spot_date, X3Y_date, "3Y"),  -0.648340377/100)
+
+
+
+
+        df_spot_3Y = Rate.get_discounted_factor_spot_maturity_from_market_quote_over_1Ys([df_spot_1Y, df_spot_2Y], market_quote_spot_3Y)
+
+        #print("df_spot_maturity={df_spot_maturity}".format(df_spot_maturity=df_spot_maturity.value))
+        self.assertEqual(round(df_spot_3Y.mid, 9), round(1.02005535797514/df_today_spot.mid, 9))
+
+
+class Test_get_discounted_factor_spot_maturity_from_market_quote_over_1Ys_3(unittest.TestCase):
+
+    def test_init(self):
+        today_date = datetime.date(2016, 9, 1)
+        spot_date = datetime.date(2016, 9, 6)
+        X1Y_date = datetime.date(2017, 9, 6)
+        X2Y_date = datetime.date(2018, 9, 6)
+        X3Y_date = datetime.date(2019, 9, 6)
+
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
+
+        df_today_spot = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(today_date, spot_date, "T/N"), 0.999902912000058)
+
+        df_spot_1Y = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(spot_date, X1Y_date, "1Y"), 0.990249851870478/df_today_spot.mid)
+        df_spot_2Y = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(spot_date, X2Y_date, "2Y"), 0.979004489920685/df_today_spot.mid)
+        market_quote_spot_3Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(spot_date, X3Y_date, "3Y"),  1.109205635/100)
+
+        df_spot_3Y = Rate.get_discounted_factor_spot_maturity_from_market_quote_over_1Ys([df_spot_1Y, df_spot_2Y], market_quote_spot_3Y)
+
+        self.assertEqual(round(df_spot_3Y.mid, 9), round(0.96688278302637/df_today_spot.mid, 9))
+
+
+class Test_get_discounted_factor_today_maturity_from_market_quote_over_1Ys(unittest.TestCase):
+
+    def test_init(self):
+        today_date = datetime.date(2016, 9, 1)
+        spot_date = datetime.date(2016, 9, 6)
+        X1Y_date = datetime.date(2017, 9, 6)
+        X2Y_date = datetime.date(2018, 9, 6)
+        X3Y_date = datetime.date(2019, 9, 6)
+
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
+
+        market_quote_spot_1Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(spot_date, X1Y_date, "1Y"), 0.961456991/100)
+        market_quote_spot_2Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(spot_date, X2Y_date, "2Y"), 1.046697823/100)
+        market_quote_spot_3Y = Rate.cls_market_quote(usd_ccy, Rate.cls_tenor(spot_date, X3Y_date, "3Y"),  1.109205635/100)
+
+        df_today_spot = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(today_date, spot_date, "T/N"), 0.999902912000058)
+
+        df_spot_1Y = market_quote_spot_1Y.get_discount_factor_spot_maturity()
+        self.assertEqual(round(df_spot_1Y.mid * df_today_spot.mid, 9), round(0.990249851870478, 9))
+
+        df_today_3Y = Rate.get_discounted_factor_today_maturity_from_market_quote_over_1Ys(df_today_spot, [market_quote_spot_1Y, market_quote_spot_2Y], market_quote_spot_3Y)
+        self.assertEqual(round(df_today_3Y.mid, 9), round(0.96688278302637, 9))
 
 
 class Test_get_discount_factor_curve_from_market_quote_curve_dict(unittest.TestCase):
