@@ -147,11 +147,11 @@ class Test_cls_market_quote(unittest.TestCase):
 
         DF_t_n = Rate.cls_discount_factor(EUR, today_spot, 0.997)
         MQ1 = Rate.cls_market_quote(EUR, spot_onemonth, 0.2)
-        DF1 = MQ1.get_discount_factor(DF_t_n)
+        DF1 = MQ1.get_discount_factor_today_maturity(DF_t_n)
         DR1 = MQ1.get_discount_rate(DF_t_n)
 
-        self.assertEqual(DF1.mid, 0.997 / ( 0.2 * (datetime.date(2017,1,17) - datetime.date(2016, 12, 19) ).days / 365 + 1) )
-        self.assertEqual(DR1.mid, DF1.get_discount_rate().mid)
+        self.assertEqual(round(DF1.mid, 9), round(0.997 / ( 0.2 * (datetime.date(2017,1,17) - datetime.date(2016, 12, 19) ).days / 365 + 1),9) )
+        self.assertEqual(round(DR1.mid, 9), round(DF1.get_discount_rate().mid, 9))
 
 
 
@@ -220,10 +220,10 @@ class Test_cls_market_quote_curve(unittest.TestCase):
         df_tn = usd_mq_curve.get_discount_factor_by_label('T/N')
         self.assertEqual(round(df_tn.mid, 9), round(0.9997495386, 9))
 
-        df_1m = mq_1M.get_discount_factor(df_tn)
+        df_1m = mq_1M.get_discount_factor_today_maturity(df_tn)
         self.assertEqual(round(df_1m.mid, 9), round(0.9978120546, 9))
 
-        df_2m = mq_2M.get_discount_factor(df_tn)
+        df_2m = mq_2M.get_discount_factor_today_maturity(df_tn)
         self.assertEqual(round(df_2m.mid, 9), round(0.9958490192, 9))
 
         df_3m = usd_mq_curve.get_discount_factor_by_label('3M')
@@ -261,7 +261,7 @@ class Test_cls_market_quote_curve_over1Ys(unittest.TestCase):
         df_tn = usd_mq_curve.get_discount_factor_by_label('T/N')
         self.assertEqual(round(df_tn.mid, 9), round(0.999902912000058, 9))
 
-        df_1Y = mq_1Y.get_discount_factor(df_tn)
+        df_1Y = mq_1Y.get_discount_factor_today_maturity(df_tn)
         self.assertEqual(round(df_1Y.mid, 9), round(0.990249851870478, 9))
 
         usd_df_curve = usd_mq_curve.get_discount_factor_curve(Rate.linearization_enum.log_ds_factor)
@@ -454,10 +454,10 @@ class Test_create_swap_point_panel_by_market_quote(unittest.TestCase):
         # print("df_on.mid is ", df_on.mid)
         self.assertEqual(round(df_on.mid, 9), round(0.999599981841894, 9))
 
-        df_1m = mq_php_1M.get_discount_factor(df_on)
+        df_1m = mq_php_1M.get_discount_factor_today_maturity(df_on)
         self.assertEqual(round(df_1m.mid, 9), round(0.996507481499024, 9))
 
-        df_2m = mq_php_2M.get_discount_factor(df_on)
+        df_2m = mq_php_2M.get_discount_factor_today_maturity(df_on)
         self.assertEqual(round(df_2m.mid, 9), round(0.992369138640949, 9))
 
         df_3m = php_mq_curve.get_discount_factor_by_label('3M')
@@ -1069,10 +1069,10 @@ class Test_get_discount_factor_curve_from_market_quote_curve_dict(unittest.TestC
         df_tn = usd_mq_curve.get_discount_factor_by_label('T/N')
         self.assertEqual(round(df_tn.mid, 9), round(0.9997495386, 9))
 
-        df_1m = mq_usd_1M.get_discount_factor(df_tn)
+        df_1m = mq_usd_1M.get_discount_factor_today_maturity(df_tn)
         self.assertEqual(round(df_1m.mid, 9), round(0.9978120546, 9))
 
-        df_2m = mq_usd_2M.get_discount_factor(df_tn)
+        df_2m = mq_usd_2M.get_discount_factor_today_maturity(df_tn)
         self.assertEqual(round(df_2m.mid, 9), round(0.9958490192, 9))
 
         df_3m = usd_mq_curve.get_discount_factor_by_label('3M')
