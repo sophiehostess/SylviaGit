@@ -8,9 +8,6 @@ import datetime
 import Rate2 as Rate
 
 
-if __name__ == '__main__':
-    unittest.main()
-
 
 class Test_cls_currency(unittest.TestCase):
 
@@ -1137,3 +1134,8 @@ class Test_get_market_quote_list_backwardshifted(unittest.TestCase):
         self.assertEqual(result_list1[0].label, "6M")
         self.assertEqual(result_list1[1].label, "18M")
 
+
+
+
+if __name__ == '__main__':
+    unittest.main()

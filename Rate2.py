@@ -913,6 +913,14 @@ class cls_swap_point(cls_currency_pair_rate):
         else:
             pass
 
+    @property
+    def swap_point_factor(self)->int:
+        return self.currency_pair.swap_point_factor
+
+    @property
+    def swap_point_value_multi_by_factor(self)->float:
+        return self.mid * self.swap_point_factor
+
 
 class cls_rate_curve:
     def __init__(self, fx_rate_list: list):
@@ -1156,6 +1164,8 @@ def get_1Ybackwardshifted_tenor_label(input_tenor_label:str)->str:
         shifted_tenor_label = "8Y"
     elif input_tenor_label == "10Y":
         shifted_tenor_label = "9Y"
+    else:
+        shifted_tenor_label = str(int(input_tenor_label[0:-1]) - 1) + input_tenor_label[-1]
 
     return shifted_tenor_label
 
@@ -1276,9 +1286,10 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
             shifted_tenor_label = get_1Ybackwardshifted_tenor_label(input_tenor_label)
             mq_backward_1Y_shifted = self.get_market_quote_by_label(shifted_tenor_label)
 
-            # while mq_backward_1Y_shifted is None and shifted_tenor_label is not None :
-            #     shifted_tenor_label = get_1Ybackwardshifted_tenor_label(shifted_tenor_label)
-            #     mq_backward_1Y_shifted = self.get_market_quote_by_label(shifted_tenor_label)
+            # work around only
+            while mq_backward_1Y_shifted is None and shifted_tenor_label is not None :
+                shifted_tenor_label = get_1Ybackwardshifted_tenor_label(shifted_tenor_label)
+                mq_backward_1Y_shifted = self.get_market_quote_by_label(shifted_tenor_label)
 
             if mq_backward_1Y_shifted is not None:
                 mq_result_list.append(mq_backward_1Y_shifted)

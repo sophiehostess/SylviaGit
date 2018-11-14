@@ -9,9 +9,6 @@ import Rate2 as Rate
 import Trade as Trade
 
 
-if __name__ == '__main__':
-    unittest.main()
-
 
 
 class Test_cls_spot_forward_trade_1(unittest.TestCase):
@@ -68,3 +65,9 @@ class Test_cls_spot_forward_trade_2(unittest.TestCase):
         self.assertEqual(result_trade.quotation, "USD-CNY")
         self.assertEqual(result_trade.quotation_mode, Rate.quotation_mode_enum.base_und)
         self.assertEqual(result_trade.price, 61000/10000)
+
+
+
+
+if __name__ == '__main__':
+    unittest.main()

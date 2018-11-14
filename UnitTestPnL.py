@@ -10,10 +10,6 @@ import Trade as Trade
 import PnL as PnL
 
 
-if __name__ == '__main__':
-    unittest.main()
-
-
 class Test_cls_fx_trade_eco_pnl1(unittest.TestCase):
     
     def test_init(self):
@@ -496,3 +492,9 @@ class Test_create_trade_eco_pnl_from_df_curve_dict(unittest.TestCase):
 
         mkt_fwd = spot_rate_usdsgd.mid * (df_usd_20170725.mid / df_usd_20170615.mid) / (df_sgd_20170725.mid / df_sgd_20170615.mid)
         self.assertEqual(round(eco_pnl.eco_pnl, 9), round(2000 * (1 / mkt_fwd - 1 / (2000 / 1200)) * df_usd_20170725.mid, 9))
+
+
+
+if __name__ == '__main__':
+    unittest.main()
+
