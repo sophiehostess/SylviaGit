@@ -1,0 +1,32 @@
+2018-09-25 00:37:38,009 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-09-25 00:37:38,009 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2018-09-25 00:37:38,009 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2018-09-25 00:37:38,009 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 299.40000000000003. 
+2018-09-25 00:37:38,009 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-09-25 00:37:38,009 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2018-09-25 00:37:38,009 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 200.00000000000009. 
+2018-09-25 00:37:38,025 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 199.4000000000001. 
+2018-09-25 00:37:38,025 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-09-25 00:37:38,025 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2018-09-25 00:37:38,025 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-09-25 00:37:38,025 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 300.00000000000006. 
+2018-09-25 00:37:38,025 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 300.1136073059361. 
+2018-09-25 00:37:38,025 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-09-25 00:37:38,025 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 204.62138641592475. 
+2018-09-25 00:37:38,025 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 202.5751725517655. 
+2018-09-25 00:37:38,040 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 307.5225677031095. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 306.60000000000014. 
+2018-09-25 00:37:38,040 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.base_und. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 246.04830013919798. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 245.7180378892357. 
+2018-09-25 00:37:38,040 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.base_und. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 246.04830013919775. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 245.71803788923546. 
+2018-09-25 00:37:38,040 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.base_und. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_acc_pnl - INFO - Accounting PnL is 246.04830013919798. 
+2018-09-25 00:37:38,040 - PnL.py - PnL - refresh_eco_pnl - INFO - Economic PnL is 245.7180378892357. 
+2018-09-25 00:37:45,407 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-09-25 00:37:45,407 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.base_und. 
+2018-10-01 15:22:43,862 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.und_base. 
+2018-10-01 15:22:43,862 - Trade.py - Trade - create_fx_trade - INFO - contract price quotation_mode is quotation_mode_enum.base_und. 

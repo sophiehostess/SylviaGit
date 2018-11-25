@@ -16,6 +16,16 @@ class quotation_mode_enum(Enum):
     base_und = "base-und"
     und_base = "und-base"
 
+def get_reversed_quotation_mode(quotation_mode:quotation_mode_enum)->quotation_mode_enum:
+    if quotation_mode == quotation_mode_enum.base_und:
+        return quotation_mode_enum.und_base
+    elif quotation_mode == quotation_mode_enum.und_base:
+        return quotation_mode_enum.base_und
+
+
+def get_reversed_quotation(quotation:str)->str:
+    return quotation[0:3] + quotation[3:4] + quotation[4:7]
+
 
 class linearization_enum(Enum):
     # Interpolate Log(DiscountFactor) linearly
@@ -114,7 +124,8 @@ class cls_currency_pair:
         elif quotation_mode == quotation_mode_enum.und_base:
             self.__quotation = build_quotation(underlying.label, base.label)
         else:
-            logger.critical("parameter quotation_mode {quotation_mode} is invalid".format(quotation_mode=quotation_mode.__repr__()))
+            assert("quotation_mode is invalid")
+            logger.critical("{class_name} : parameter quotation_mode {quotation_mode} is invalid".format(class_name=self.__class__.__name__.replace("cls_",""),  quotation_mode=quotation_mode.__repr__()))
             # ("quotation is " + self.__quotation)
 
     @property
@@ -583,10 +594,16 @@ class cls_deal_price(cls_rate):
     def __init__(self,
                  currency_pair: cls_currency_pair,
                  maturity_date: datetime.date,
-                 value: float=0):
+                 value: float=0,
+                 quotation_mode: quotation_mode_enum = None):
         self.currency_pair = currency_pair
         self.maturity_date = maturity_date
         super().__init__(value, value, value)
+
+        if quotation_mode is None:
+            self.quotation_mode = self.currency_pair.quotation_mode
+        else:
+            self.quotation_mode = quotation_mode
 
     @property
     def value(self):
@@ -598,13 +615,13 @@ class cls_deal_price(cls_rate):
 
 
     def get_deal_price_by_quotation_mode(self,quotation_mode: quotation_mode_enum):
-        if quotation_mode == self.currency_pair.quotation_mode:
+        if quotation_mode == self.quotation_mode:
             return self
         else:
             return self.get_reversed_deal_price()
 
     def get_reversed_deal_price(self)->cls_rate:
-        return cls_deal_price(self.currency_pair.get_reversed_pair(), self.maturity_date, 1/self.value)
+        return cls_deal_price(self.currency_pair, self.maturity_date, 1/self.value, get_reversed_quotation_mode(self.quotation_mode))
 
 
 class cls_currency_pair_rate(cls_rate):
@@ -613,11 +630,17 @@ class cls_currency_pair_rate(cls_rate):
                  tenor: cls_tenor=None,
                  mid: float=0,
                  bid: float=0,
-                 ask: float=0):
+                 ask: float=0,
+                 quotation_mode: quotation_mode_enum=None):
         self.currency_pair = currency_pair
         self.tenor = tenor
         super().__init__(mid, bid, ask)
         self.__unique_key = self.__get_unique_key()
+
+        if quotation_mode is None:
+            self.quotation_mode = self.currency_pair.quotation_mode
+        else:
+            self.quotation_mode = quotation_mode
 
     def __get_unique_key(self)->str:
         return (self.__class__.__name__.replace("cls_","") + "#" +
@@ -641,23 +664,30 @@ class cls_currency_pair_rate(cls_rate):
     def label(self)->str:
         return self.tenor.label
 
+    @property
+    def quotation(self)->str:
+        if self.quotation_mode == quotation_mode_enum.base_und:
+            return build_quotation(self.currency_pair.base.label, self.currency_pair.underlying.label)
+        elif self.quotation_mode == quotation_mode_enum.und_base:
+            return build_quotation(self.currency_pair.underlying.label, self.currency_pair.base.label)
+
 
 class cls_fx_rate(cls_currency_pair_rate):
     def get_reversed_fx_rate(self):
-        return cls_fx_rate(self.currency_pair.get_reversed_pair(), self.tenor,
-                           1 / self.mid, 1 / self.bid, 1 / self.ask)
+        return cls_fx_rate(self.currency_pair, self.tenor,
+                           1 / self.mid, 1 / self.bid, 1 / self.ask, get_reversed_quotation_mode(self.quotation_mode))
 
     def get_fx_rate_by_quotation_mode(self,
                                       quotation_mode: quotation_mode_enum):
-        if quotation_mode == self.currency_pair.quotation_mode:
+        if quotation_mode == self.quotation_mode:
             return self
         else:
             return self.get_reversed_fx_rate()
 
     def get_fx_rate_by_quotation(self, quotation: str):
-        if quotation == self.currency_pair.quotation:
+        if quotation == self.quotation:
             return self
-        elif quotation == self.currency_pair.get_reversed_pair().quotation:
+        elif quotation == get_reversed_quotation(self.quotation):
             return self.get_reversed_fx_rate()
         else:
             logger.critical("parameter quotation {quotation} is invalid".format(quotation=quotation))
@@ -728,19 +758,21 @@ class cls_fx_spot_rate(cls_fx_rate):
                  tenor: cls_tenor,
                  mid: float=0,
                  bid: float=0,
-                 ask: float=0):
-        super().__init__(currency_pair, tenor, mid, bid, ask)
+                 ask: float=0,
+                 quotation_mode: quotation_mode_enum = None):
+
+        super().__init__(currency_pair, tenor, mid, bid, ask, quotation_mode)
         self.tenor.label = "SPT"
         # print(str(self.mid))
 
     def get_spot_cls(self, fx_rate: cls_fx_rate):
         return cls_fx_spot_rate(fx_rate.currency_pair, fx_rate.tenor,
-                                fx_rate.mid, fx_rate.bid, fx_rate.ask)
+                                fx_rate.mid, fx_rate.bid, fx_rate.ask, fx_rate.quotation_mode)
 
     def get_fx_rate_by_quotation(self, quotation: str):
-        if quotation == self.currency_pair.quotation:
+        if quotation == self.quotation:
             return self
-        elif quotation == self.currency_pair.get_reversed_pair().quotation:
+        elif quotation == get_reversed_quotation(self.quotation):
             return self.get_spot_cls(self.get_reversed_fx_rate())
         else:
             logger.critical("parameter quotation {quotation}is invalid.".format(quotation=quotation))
@@ -760,10 +792,11 @@ class cls_fx_forward_rate(cls_fx_rate):
                  tenor: cls_tenor,
                  mid: float=0,
                  bid: float=0,
-                 ask: float=0):
-        super().__init__(currency_pair, tenor, mid, bid, ask)
+                 ask: float=0,
+                 quotation_mode: quotation_mode_enum = None):
+        super().__init__(currency_pair, tenor, mid, bid, ask, quotation_mode)
 
-        self.__spot_rate = cls_fx_spot_rate(currency_pair, tenor, mid, bid, ask)
+        self.__spot_rate = cls_fx_spot_rate(currency_pair, tenor, mid, bid, ask, quotation_mode)
         self.__swap_point = cls_swap_point(currency_pair, tenor, 0, 0, 0) #multiped by factor
 
     @property
@@ -1353,7 +1386,7 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
             return self.get_market_quote_by_label('O/N').tenor.start_date
 
         else:
-            assert("invalid spotdate shift")
+            assert("invalid spot date shift")
 
     @property
     def today_date(self)->datetime.date:
@@ -1634,8 +1667,13 @@ class cls_swap_point_panel(cls_rate_curve):
 
         df_und_spot_maturity = self.df_curve_und_ccy.get_discount_factor_by_start_maturity(self.spot_date, maturity_date)
 
+        if self.currency_pair.quotation_mode == quotation_mode_enum.base_und:
+            forward_rate_value = self.spot_rate.mid * df_base_spot_maturity.mid / df_und_spot_maturity.mid
+        elif self.currency_pair.quotation_mode == quotation_mode_enum.und_base:
+            forward_rate_value = self.spot_rate.mid * df_und_spot_maturity.mid / df_base_spot_maturity.mid
+
         return cls_fx_forward_rate(self.currency_pair, cls_tenor(self.today_date, maturity_date),
-                                   self.spot_rate.mid * df_base_spot_maturity.mid / df_und_spot_maturity.mid )
+                                   forward_rate_value, self.currency_pair.quotation_mode)
 
 
     # get underlying currency discount factor curve by base currency discount factor curve and swap point
