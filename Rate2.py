@@ -1673,7 +1673,7 @@ class cls_swap_point_panel(cls_rate_curve):
             forward_rate_value = self.spot_rate.mid * df_und_spot_maturity.mid / df_base_spot_maturity.mid
 
         return cls_fx_forward_rate(self.currency_pair, cls_tenor(self.today_date, maturity_date),
-                                   forward_rate_value, self.currency_pair.quotation_mode)
+                                   forward_rate_value, quotation_mode=self.currency_pair.quotation_mode)
 
 
     # get underlying currency discount factor curve by base currency discount factor curve and swap point
