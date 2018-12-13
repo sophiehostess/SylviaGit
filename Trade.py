@@ -131,13 +131,12 @@ def create_fx_trade(trade_uti: str=None,
             fx_price = Rate.cls_deal_price(ccy_pair, maturity_date, abs(ccy1_notional/ccy2_notional))
 
     else:
-        ccy_pair =None
         fx_price = None
         base_ccy_notional =None
         und_ccy_notional = None
 
 
-    logger.info("contract price quotation_mode is {quotation_mode}. ".format(quotation_mode=str(ccy_pair.quotation_mode)))
+    #logger.info("contract price quotation_mode is {quotation_mode}. ".format(quotation_mode=str(ccy_pair.quotation_mode)))
 
     return cls_spot_forward_trade(trade_uti.upper().strip(),counterparty.upper().strip(), portfolio.upper().strip(), trade_date,  fx_price, base_ccy_notional,und_ccy_notional)
 
@@ -151,3 +150,49 @@ class simple_cash_flow():
         self.amount = amount
         self.payment_date = payment_date
         self.currency = currency
+
+
+
+class cls_spot_forward_trade_detail(cls_spot_forward_trade):
+    def __init__(self,
+                 trade_uti: str=None,
+                 counterparty: str=None,
+                 portfolio: str=None,
+                 trade_date: datetime.date=None,
+                 contract_price: Rate.cls_deal_price=None,
+                 contract_spot_price: Rate.cls_deal_price = None,
+                 base_ccy_notional: float=None,
+                 und_ccy_notional: float=None):
+        super().__init__(trade_uti, counterparty, portfolio, trade_date, contract_price, base_ccy_notional, und_ccy_notional)
+
+        self.spot_price = contract_spot_price
+        self.swap_points_value = contract_price.value - contract_spot_price.value
+
+
+
+def create_fx_trade_detail(trade_uti: str=None,
+                           counterparty: str=None,
+                           portfolio: str=None,
+                           trade_date: datetime.date=None,
+                           maturity_date: datetime.date=None,
+                           base_ccy_input: str=None,
+                           quotation_input: str=None,
+                           ccy1_input: str=None,
+                           ccy1_notional: float=None,
+                           ccy2_input: str=None,
+                           ccy2_notional: float=None,
+                           contract_spot_value: float=None)->cls_spot_forward_trade_detail:
+
+    fx_trade = create_fx_trade(trade_uti, counterparty, portfolio, trade_date, maturity_date, base_ccy_input, quotation_input, ccy1_input, ccy1_notional, ccy2_input, ccy2_notional)
+    spot_price = Rate.cls_deal_price(fx_trade.currency_pair, fx_trade.maturity_date, contract_spot_value)
+
+    return cls_spot_forward_trade_detail(fx_trade.trade_uti,
+                                         fx_trade.counterparty,
+                                         fx_trade.portfolio,
+                                         fx_trade.trade_date,
+                                         fx_trade.contract_price,
+                                         spot_price,
+                                         fx_trade.base_ccy_notional,
+                                         fx_trade.und_ccy_notional
+                                        )
+

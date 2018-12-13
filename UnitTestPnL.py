@@ -161,12 +161,13 @@ class Test_cls_nsp_eco_pnl(unittest.TestCase):
         self.assertEqual(round(eco_pnl.acc_pnl, 7), round(1000 *(1.5 - 1.2), 7))
 
         usd_cash_flow_financing = -1200 * ( 0.002 * 1 / 360 + 0.003 * 4 / 360)
-        print("usd_cash_flow_financing is " + str(usd_cash_flow_financing))
-        print("eco_pnl.get_pnl_ccy_financing is " + str(eco_pnl.get_pnl_ccy_financing))
+        #print("usd_cash_flow_financing is " + str(usd_cash_flow_financing))
+        #print("eco_pnl.get_pnl_ccy_financing is " + str(eco_pnl.get_pnl_ccy_financing))
 
         eur_cash_flow_financing = 1000 * (0.007 * 1 / 365 + 0.008 * 4 / 365)
-        print("eur_cash_flow_financing is " + str(eur_cash_flow_financing))
-        print("eco_pnl.get_counter_ccy_financing is " + str(eco_pnl.get_counter_ccy_financing))
+
+        #print("eur_cash_flow_financing is " + str(eur_cash_flow_financing))
+        #print("eco_pnl.get_counter_ccy_financing is " + str(eco_pnl.get_counter_ccy_financing))
 
         self.assertEqual(eco_pnl.eco_pnl, eco_pnl.acc_pnl + usd_cash_flow_financing + eur_cash_flow_financing * today_rate.mid)
 
@@ -323,7 +324,7 @@ class Test_create_trade_eco_pnl_from_df_curves(unittest.TestCase):
 
         mkt_fwd = spot_rate_usdsgd.mid * (df_usd_20170725.mid/df_usd_20170615.mid) /(df_sgd_20170725.mid/ df_sgd_20170615.mid)
         self.assertEqual(round(eco_pnl.eco_pnl, 9), round(  2000 * ( 1/mkt_fwd -  1/(2000/1200) ) *  df_usd_20170725.mid  , 9))
-        print("eco_pnl={eco_pnl}".format(eco_pnl=eco_pnl.eco_pnl))
+        #print("eco_pnl={eco_pnl}".format(eco_pnl=eco_pnl.eco_pnl))
 
 class Test_create_trade_eco_pnl_from_swap_point_panel(unittest.TestCase):
     def test_init(self):
@@ -494,6 +495,62 @@ class Test_create_trade_eco_pnl_from_df_curve_dict(unittest.TestCase):
         self.assertEqual(round(eco_pnl.eco_pnl, 9), round(2000 * (1 / mkt_fwd - 1 / (2000 / 1200)) * df_usd_20170725.mid, 9))
 
 
+class Test_cls_fx_trade_simulation_pnl(unittest.TestCase):
+    def test_init(self):
+        test_trade = Trade.create_fx_trade_detail(trade_uti="TEST12345",
+                                                  counterparty="ABC123",
+                                                  portfolio="PORT789",
+                                                  trade_date=datetime.date(2017, 1, 17),
+                                                  maturity_date=datetime.date(2017, 11, 7),
+                                                  base_ccy_input="USD",
+                                                  quotation_input="USD-JPY",
+                                                  ccy1_input="USD",
+                                                  ccy1_notional=10000000,
+                                                  ccy2_input="JPY",
+                                                  ccy2_notional=-1025580000,
+                                                  contract_spot_value=104.348)
+
+
+        usd_ccy = Rate.cls_currency("USD", 360, Rate.date_shift_enum.D2)
+
+        jpy_ccy = Rate.cls_currency("JPY", 360, Rate.date_shift_enum.D2)
+
+        usdjpy_ccy_pair = Rate.cls_currency_pair(usd_ccy, jpy_ccy, Rate.quotation_mode_enum.base_und, 100)
+
+        date_of_today = datetime.date(2017, 8, 28)
+
+        spot_date = datetime.date(2017, 8, 30)
+
+        maturity_date = datetime.date(2017, 11, 7)
+
+        spot_rate = Rate.cls_fx_spot_rate(usdjpy_ccy_pair, Rate.cls_tenor(date_of_today, spot_date), 109.655)
+
+        usd_df_s_m = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(spot_date, maturity_date, ""), 0.99750604925953)
+
+        jpy_df_s_m = Rate.cls_discount_factor(jpy_ccy, Rate.cls_tenor(spot_date, maturity_date, ""), 1.00075847561013)
+
+        usd_df_earlier_bucket_date_maturity = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(datetime.date(2017, 10, 30), maturity_date, "2M"), 0.999700321913332)
+
+        usd_df_later_bucket_date_maturity = Rate.cls_discount_factor(usd_ccy, Rate.cls_tenor(datetime.date(2017, 11, 30), maturity_date, "3M"), 1.0008620749957)
+
+        sim_pnl = PnL.create_trade_simulation_pnl_by_spot_value(test_trade,
+                                                                usd_df_s_m,
+                                                                jpy_df_s_m,
+                                                                spot_rate,
+                                                                usd_df_earlier_bucket_date_maturity,
+                                                                usd_df_later_bucket_date_maturity,
+                                                                date_of_today
+                                                               )
+
+        self.assertEqual(round(sim_pnl.market_forward_rate.value, 6),  round(109.2986255, 6))
+        self.assertEqual(round(sim_pnl.total_pnl_discounted_to_spot, 4), round(615178.3402, 4))
+        self.assertEqual(round(sim_pnl.spot_pnl_discounted_to_spot, 4), round(474484.0303, 4))
+        self.assertEqual(round(sim_pnl.swap_pnl_discounted_to_maturity, 4), round(141046.0719, 4))
+        self.assertEqual(round(sim_pnl.base_ccy_cashflow_discounted_to_spot, 4), round(9975060.4926, 4))
+        self.assertEqual(round(sim_pnl.und_ccy_cashflow_discounted_to_spot, 4), round(-1026357877.4162, 4))
+
+        self.assertEqual(round(sim_pnl.earlier_bucket_swap_pnl, 4), round(104615.7251, 4))
+        self.assertEqual(round(sim_pnl.later_bucket_swap_pnl, 4), round(36430.3649, 4))
 
 if __name__ == '__main__':
     unittest.main()

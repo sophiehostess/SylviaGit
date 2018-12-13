@@ -884,6 +884,52 @@ class cls_fx_forward_rate(cls_fx_rate):
         self.swap_point = swap_point
 
 
+def create_forward_rate_by_spot_and_df(currency_pair: cls_currency_pair,
+                                       tenor: cls_tenor,
+                                       spot_rate: cls_fx_spot_rate,
+                                       base_ccy_df_s_m: cls_discount_factor,
+                                       und_ccy_df_s_m: cls_discount_factor)->cls_fx_forward_rate:
+
+    spot_rate_with_aligned_quotation_mode = spot_rate.get_fx_rate_by_quotation_mode(currency_pair.quotation_mode)
+
+    # quotation is base-und
+    if currency_pair.quotation_mode == quotation_mode_enum.base_und:
+        forward_rate_value = spot_rate_with_aligned_quotation_mode.mid * (base_ccy_df_s_m.mid / und_ccy_df_s_m.mid)
+
+    # quotation is und-base
+    elif currency_pair.quotation_mode == quotation_mode_enum.und_base:
+        forward_rate_value = spot_rate_with_aligned_quotation_mode.mid * (und_ccy_df_s_m.mid / base_ccy_df_s_m.mid)
+
+    else:
+        forward_rate_value = 0
+
+    return cls_fx_forward_rate(currency_pair, tenor, forward_rate_value)
+
+
+def create_forward_rate_by_discounted_spot_and_df(currency_pair: cls_currency_pair,
+                                                  tenor: cls_tenor,
+                                                  discounted_spot_rate: cls_fx_rate,
+                                                  base_ccy_df_t_m: cls_discount_factor,
+                                                  und_ccy_df_t_m: cls_discount_factor)->cls_fx_forward_rate:
+
+    discounted_spot_rate_with_aligned_quotation_mode = discounted_spot_rate.get_fx_rate_by_quotation_mode(currency_pair.quotation_mode)
+
+    # quotation is base-und
+    if currency_pair.quotation_mode == quotation_mode_enum.base_und:
+        forward_rate_value = discounted_spot_rate_with_aligned_quotation_mode.mid * (base_ccy_df_t_m.mid / und_ccy_df_t_m.mid)
+
+    # quotation is und-base
+    elif currency_pair.quotation_mode == quotation_mode_enum.und_base:
+        forward_rate_value = discounted_spot_rate_with_aligned_quotation_mode.mid * (und_ccy_df_t_m.mid / base_ccy_df_t_m.mid)
+
+    else:
+        forward_rate_value = 0
+
+    return cls_fx_forward_rate(currency_pair, tenor, forward_rate_value)
+
+
+
+
 class cls_fx_discounted_spot_rate(cls_fx_forward_rate):
     def __init__(self,
                  currency_pair: cls_currency_pair,
@@ -1113,6 +1159,54 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
         #         return ds_factor_iter
         # else:
         #     return None
+
+
+    def get_neighbor_tenor_dates_by_maturity_date(
+            self, maturity_date: datetime.date) -> tuple:
+
+        #search in existing tenor
+        for ds_factor_iter in self.fx_rate_list:
+            if ds_factor_iter.tenor.maturity_date == maturity_date:
+                return (maturity_date, maturity_date)
+
+        else:
+
+            # find out the discount factor earlier than target one , and the one later than target one
+            previous_df = self.fx_rate_list[0]
+            for ds_factor_iter in self.fx_rate_list:
+
+                if ds_factor_iter.tenor.maturity_date > maturity_date:
+                    df_late = ds_factor_iter
+
+                    df_early = previous_df
+
+                    return (df_early.maturity_date, df_late.maturity_date)
+
+                previous_df = ds_factor_iter
+
+    def get_neighbor_discount_factors_by_maturity_date(
+            self, maturity_date: datetime.date) -> tuple:
+
+        #search in existing tenor
+        for ds_factor_iter in self.fx_rate_list:
+            if ds_factor_iter.tenor.maturity_date == maturity_date:
+                return (maturity_date, maturity_date)
+
+        else:
+
+            # find out the discount factor earlier than target one , and the one later than target one
+            previous_df = self.fx_rate_list[0]
+            for ds_factor_iter in self.fx_rate_list:
+
+                if ds_factor_iter.tenor.maturity_date > maturity_date:
+                    df_late = ds_factor_iter
+
+                    df_early = previous_df
+
+                    return (df_early, df_late)
+
+                previous_df = ds_factor_iter
+
 
     @property
     def today_date(self)->datetime.date:
