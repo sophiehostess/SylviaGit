@@ -277,14 +277,14 @@ def create_trade_eco_pnl_from_df_curve_dict(trade: Trade.cls_fx_trade,
 
 class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
     def __init__(self,
-                 trade:Trade.cls_spot_forward_trade_detail,
-                 market_forward_rate:Rate.cls_fx_forward_rate,
+                 trade: Trade.cls_spot_forward_trade_detail,
+                 market_forward_rate: Rate.cls_fx_forward_rate,
                  market_spot_rate: Rate.cls_fx_spot_rate,
                  pnl_ccy_df_s_m: Rate.cls_discount_factor,
                  risk_ccy_df_s_m: Rate.cls_discount_factor,
                  pl_ccy_df_earlier_bucket_date_maturity: Rate.cls_discount_factor,
                  pl_ccy_df_later_bucket_date_maturity: Rate.cls_discount_factor,
-                 pnl_cal_date:datetime.date
+                 pnl_cal_date: datetime.date
                 ):
 
         # maturity date discount to spot date
@@ -337,7 +337,11 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
             acc_pnl = und_ccy_notional * (1/self.market_forward_rate.mid - 1/contract_price.mid)
             total_pnl_discounted_to_spot = acc_pnl * self.base_ccy_df_s_m.mid
 
-            spot_pnl_discounted_to_spot = self.trade.und_ccy_notional * (1/self.market_spot_rate.value - 1/self.trade.spot_price.value) * self.base_ccy_df_s_m.mid
+
+            if self.trade.maturity_date >= self.market_spot_rate.maturity_date :
+                spot_pnl_discounted_to_spot = self.trade.und_ccy_notional * (1/self.market_spot_rate.value - 1/self.trade.spot_price.value) * self.base_ccy_df_s_m.mid
+            else:
+                spot_pnl_discounted_to_spot = self.trade.und_ccy_notional * (1/self.market_spot_rate.value - 1/contract_price.value) * self.base_ccy_df_s_m.mid
 
             # discount to maturity date
             swap_pnl_discounted_to_maturity = (total_pnl_discounted_to_spot  - spot_pnl_discounted_to_spot) / self.base_ccy_df_s_m.mid
@@ -350,7 +354,11 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
 
             total_pnl_discounted_to_spot = acc_pnl * self.und_ccy_df_s_m.mid
 
-            spot_pnl_discounted_to_spot = self.trade.base_ccy_notional * (self.market_spot_rate.value - self.trade.spot_price.value) * self.und_ccy_df_s_m.mid
+            if self.trade.maturity_date >= self.market_spot_rate.maturity_date:
+                spot_pnl_discounted_to_spot = self.trade.base_ccy_notional * (self.market_spot_rate.value - self.trade.spot_price.value) * self.und_ccy_df_s_m.mid
+            else:
+                spot_pnl_discounted_to_spot = self.trade.base_ccy_notional * (self.market_spot_rate.value - contract_price.value) * self.und_ccy_df_s_m.mid
+
 
             # discount to maturity date
             swap_pnl_discounted_to_maturity = (total_pnl_discounted_to_spot - spot_pnl_discounted_to_spot) / self.und_ccy_df_s_m.mid
@@ -362,11 +370,12 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
 
         if self.later_bucket_date != self.earlier_bucket_date :
             earlier_bucket_fraction = (self.later_bucket_date - self.trade.maturity_date) / (self.later_bucket_date - self.earlier_bucket_date)
-            print("earlier_bucket_fraction", earlier_bucket_fraction)
+            #print("earlier_bucket_fraction", earlier_bucket_fraction)
 
             later_bucket_fraction = (self.trade.maturity_date - self.earlier_bucket_date) / (self.later_bucket_date - self.earlier_bucket_date)
-            print("later_bucket_fraction", later_bucket_fraction)
+            #print("later_bucket_fraction", later_bucket_fraction)
 
+            # discounted to bucket date
             earlier_bucket_swap_pnl = swap_pnl_discounted_to_maturity * earlier_bucket_fraction * self.pl_ccy_df_earlier_bucket_date_maturity.value
             later_bucket_swap_pnl = swap_pnl_discounted_to_maturity * later_bucket_fraction * self.pl_ccy_df_later_bucket_date_maturity.value
 
@@ -440,8 +449,9 @@ def create_trade_simulation_pnl_from_df_curves(trade: Trade.cls_spot_forward_tra
     #risk currency
     risk_ccy_df_s_m = risk_ccy_df_curve.get_discount_factor_by_start_maturity(spot_date, maturity_date)
 
+    # the tenors follows risk currency
+    earlier_bucket_date, later_bucket_date = risk_ccy_df_curve.get_neighbor_tenor_dates_by_maturity_date(maturity_date)
 
-    earlier_bucket_date, later_bucket_date = risk_ccy_df_curve.get_neighbor_tenor_dates_by_maturity_date()
     pnl_ccy_df_earlier_bucket_date_maturity = pnl_ccy_df_curve.get_discount_factor_by_start_maturity(earlier_bucket_date, maturity_date)
     pnl_ccy_df_later_bucket_date_maturity = pnl_ccy_df_curve.get_discount_factor_by_start_maturity(later_bucket_date, maturity_date)
 
@@ -487,6 +497,12 @@ def create_trade_simulation_pnl_from_swap_point_panel(trade: Trade.cls_spot_forw
         pnl_ccy_df_curve = None
 
     return create_trade_simulation_pnl_from_df_curves(trade, swap_point_panel.spot_rate, pnl_ccy_df_curve, risk_ccy_df_curve, pnl_cal_date)
+
+
+
+
+
+
 
 
 class cls_nsp_acc_pnl(cls_fx_trade_pnl):
