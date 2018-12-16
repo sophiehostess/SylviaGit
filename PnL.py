@@ -330,18 +330,20 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
     def __get_simulation_pnl_values(self)->tuple:
 
         #convert all rates to base_und quotation mode
-        contract_price = self.trade.contract_price.get_deal_price_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+        contract_price_value = self.trade.contract_price.get_deal_price_by_quotation_mode(Rate.quotation_mode_enum.base_und).value
+        contract_spot_price_value = self.trade.spot_price.get_deal_price_by_quotation_mode(Rate.quotation_mode_enum.base_und).value
+
 
         if self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.base :
             und_ccy_notional = self.trade.und_ccy_notional
-            acc_pnl = und_ccy_notional * (1/self.market_forward_rate.mid - 1/contract_price.mid)
+            acc_pnl = und_ccy_notional * (1/self.market_forward_rate.mid - 1/contract_price_value)
             total_pnl_discounted_to_spot = acc_pnl * self.base_ccy_df_s_m.mid
 
 
             if self.trade.maturity_date >= self.market_spot_rate.maturity_date :
-                spot_pnl_discounted_to_spot = self.trade.und_ccy_notional * (1/self.market_spot_rate.value - 1/self.trade.spot_price.value) * self.base_ccy_df_s_m.mid
+                spot_pnl_discounted_to_spot = self.trade.und_ccy_notional * (1/self.market_spot_rate.value - 1/contract_spot_price_value) * self.base_ccy_df_s_m.mid
             else:
-                spot_pnl_discounted_to_spot = self.trade.und_ccy_notional * (1/self.market_spot_rate.value - 1/contract_price.value) * self.base_ccy_df_s_m.mid
+                spot_pnl_discounted_to_spot = self.trade.und_ccy_notional * (1/self.market_spot_rate.value - 1/contract_price_value) * self.base_ccy_df_s_m.mid
 
             # discount to maturity date
             swap_pnl_discounted_to_maturity = (total_pnl_discounted_to_spot  - spot_pnl_discounted_to_spot) / self.base_ccy_df_s_m.mid
@@ -349,15 +351,15 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
 
         elif self.pnl_presented_in_base_or_und == Rate.base_or_und_enum.und :
             base_ccy_notional = self.trade.base_ccy_notional
-            acc_pnl = base_ccy_notional * (self.market_forward_rate.mid - contract_price.mid)
+            acc_pnl = base_ccy_notional * (self.market_forward_rate.mid - contract_price_value)
 
 
             total_pnl_discounted_to_spot = acc_pnl * self.und_ccy_df_s_m.mid
 
             if self.trade.maturity_date >= self.market_spot_rate.maturity_date:
-                spot_pnl_discounted_to_spot = self.trade.base_ccy_notional * (self.market_spot_rate.value - self.trade.spot_price.value) * self.und_ccy_df_s_m.mid
+                spot_pnl_discounted_to_spot = self.trade.base_ccy_notional * (self.market_spot_rate.value - contract_spot_price_value) * self.und_ccy_df_s_m.mid
             else:
-                spot_pnl_discounted_to_spot = self.trade.base_ccy_notional * (self.market_spot_rate.value - contract_price.value) * self.und_ccy_df_s_m.mid
+                spot_pnl_discounted_to_spot = self.trade.base_ccy_notional * (self.market_spot_rate.value - contract_price_value) * self.und_ccy_df_s_m.mid
 
 
             # discount to maturity date
