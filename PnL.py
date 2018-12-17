@@ -304,6 +304,8 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
             self.und_ccy_df_s_m = pnl_ccy_df_s_m
             self.base_ccy_df_s_m = risk_ccy_df_s_m
 
+        self.acc_pnl = 0.0
+
         # pl discounted to spot date
         self.total_pnl_discounted_to_spot = 0.0
 
@@ -312,9 +314,17 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
         self.earlier_bucket_swap_pnl = 0.0
         self.later_bucket_swap_pnl = 0.0
 
-        self.base_ccy_cashflow_discounted_to_spot = 0
-        self.und_ccy_cashflow_discounted_to_spot = 0
-        self.swap_pnl_projected_to_neighbor_tenors = True
+        self.base_ccy_cashflow_discounted_to_spot = 0.0
+        self.und_ccy_cashflow_discounted_to_spot = 0.0
+
+        self.base_ccy_earlier_bucket_cashflow = 0.0
+        self.und_ccy_earlier_bucket_cashflow = 0.0
+
+        self.base_ccy_later_bucket_cashflow = 0.0
+        self.und_ccy_later_bucket_cashflow = 0.0
+
+
+        self.split_to_neighbor_tenors = True
 
         self.refresh_pl_values()
 
@@ -327,7 +337,7 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
         return self.pl_ccy_df_later_bucket_date_maturity.start_date
 
 
-    def __get_simulation_pnl_values(self)->tuple:
+    def __get_simulation_pnl_values(self):
 
         #convert all rates to base_und quotation mode
         contract_price_value = self.trade.contract_price.get_deal_price_by_quotation_mode(Rate.quotation_mode_enum.base_und).value
@@ -353,7 +363,6 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
             base_ccy_notional = self.trade.base_ccy_notional
             acc_pnl = base_ccy_notional * (self.market_forward_rate.mid - contract_price_value)
 
-
             total_pnl_discounted_to_spot = acc_pnl * self.und_ccy_df_s_m.mid
 
             if self.trade.maturity_date >= self.market_spot_rate.maturity_date:
@@ -366,9 +375,10 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
             swap_pnl_discounted_to_maturity = (total_pnl_discounted_to_spot - spot_pnl_discounted_to_spot) / self.und_ccy_df_s_m.mid
 
         else:
+            acc_pnl = 0.0
             total_pnl_discounted_to_spot = 0.0
             spot_pnl_discounted_to_spot = 0.0
-            swap_pnl_discounted_to_maturity = 0
+            swap_pnl_discounted_to_maturity = 0.0
 
         if self.later_bucket_date != self.earlier_bucket_date :
             earlier_bucket_fraction = (self.later_bucket_date - self.trade.maturity_date) / (self.later_bucket_date - self.earlier_bucket_date)
@@ -381,28 +391,46 @@ class cls_fx_trade_simulation_pnl(cls_fx_trade_pnl):
             earlier_bucket_swap_pnl = swap_pnl_discounted_to_maturity * earlier_bucket_fraction * self.pl_ccy_df_earlier_bucket_date_maturity.value
             later_bucket_swap_pnl = swap_pnl_discounted_to_maturity * later_bucket_fraction * self.pl_ccy_df_later_bucket_date_maturity.value
 
-            swap_pnl_projected_to_neighbor_tenors = True
+            base_ccy_earlier_bucket_cashflow = self.trade.base_ccy_notional * earlier_bucket_fraction * self.pl_ccy_df_earlier_bucket_date_maturity.value
+            base_ccy_later_bucket_cashflow = self.trade.base_ccy_notional * later_bucket_fraction * self.pl_ccy_df_later_bucket_date_maturity.value
+
+            und_ccy_earlier_bucket_cashflow = self.trade.und_ccy_notional * earlier_bucket_fraction * self.pl_ccy_df_earlier_bucket_date_maturity.value
+            und_ccy_later_bucket_cashflow = self.trade.und_ccy_notional * later_bucket_fraction * self.pl_ccy_df_later_bucket_date_maturity.value
+
+            split_to_neighbor_tenors = True
         else:
             earlier_bucket_swap_pnl = swap_pnl_discounted_to_maturity
             later_bucket_swap_pnl = 0
 
-            swap_pnl_projected_to_neighbor_tenors = False
+            base_ccy_earlier_bucket_cashflow = self.trade.base_ccy_notional
+            base_ccy_later_bucket_cashflow = 0
 
-        return (total_pnl_discounted_to_spot, spot_pnl_discounted_to_spot, swap_pnl_discounted_to_maturity, earlier_bucket_swap_pnl, later_bucket_swap_pnl, swap_pnl_projected_to_neighbor_tenors)
+            und_ccy_earlier_bucket_cashflow = self.trade.und_ccy_notional
+            und_ccy_later_bucket_cashflow = 0
 
+            split_to_neighbor_tenors = False
 
-    def __get_discounted_cash_flows(self)->tuple:
-        base_ccy_discounted_cashflow = self.trade.base_ccy_notional * self.base_ccy_df_s_m.value
-        und_ccy_discounted_cashflow = self.trade.und_ccy_notional * self.und_ccy_df_s_m.value
+        self.acc_pnl = acc_pnl
+        self.total_pnl_discounted_to_spot = total_pnl_discounted_to_spot
+        self.spot_pnl_discounted_to_spot = spot_pnl_discounted_to_spot
+        self.swap_pnl_discounted_to_maturity = swap_pnl_discounted_to_maturity
+        self.earlier_bucket_swap_pnl = earlier_bucket_swap_pnl
+        self.later_bucket_swap_pnl = later_bucket_swap_pnl
+        self.split_to_neighbor_tenors = split_to_neighbor_tenors
 
-        return (base_ccy_discounted_cashflow, und_ccy_discounted_cashflow)
+        self.base_ccy_cashflow_discounted_to_spot = self.trade.base_ccy_notional * self.base_ccy_df_s_m.value
+        self.und_ccy_cashflow_discounted_to_spot = self.trade.und_ccy_notional * self.und_ccy_df_s_m.value
+
+        self.base_ccy_earlier_bucket_cashflow = base_ccy_earlier_bucket_cashflow
+        self.und_ccy_earlier_bucket_cashflow = und_ccy_earlier_bucket_cashflow
+
+        self.base_ccy_later_bucket_cashflow = base_ccy_later_bucket_cashflow
+        self.und_ccy_later_bucket_cashflow = und_ccy_later_bucket_cashflow
+
 
     def refresh_pl_values(self):
-        self.total_pnl_discounted_to_spot, self.spot_pnl_discounted_to_spot, self.swap_pnl_discounted_to_maturity, self.earlier_bucket_swap_pnl, self.later_bucket_swap_pnl, self.swap_pnl_projected_to_neighbor_tenors= self.__get_simulation_pnl_values()
+        self.__get_simulation_pnl_values()
         self.pnl_value = self.total_pnl_discounted_to_spot
-
-        self.base_ccy_cashflow_discounted_to_spot, self.und_ccy_cashflow_discounted_to_spot = self.__get_discounted_cash_flows()
-
 
 def create_trade_simulation_pnl_by_spot_value(trade: Trade.cls_spot_forward_trade_detail,
                                               pnl_ccy_df_s_m: Rate.cls_discount_factor,
