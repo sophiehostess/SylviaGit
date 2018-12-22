@@ -778,7 +778,20 @@ class cls_fx_spot_rate(cls_fx_rate):
             logger.critical("parameter quotation {quotation}is invalid.".format(quotation=quotation))
             return None
 
+
+    def get_fx_rate_by_quotation_mode(self, quotation_mode: quotation_mode_enum):
+        if quotation_mode == self.quotation_mode:
+            return self
+        else:
+            return self.get_reversed_fx_rate()
+
+    def get_reversed_fx_rate(self):
+        return self.get_spot_cls(cls_fx_rate(self.currency_pair, self.tenor, 1 / self.mid, 1 / self.bid, 1 / self.ask, get_reversed_quotation_mode(self.quotation_mode)))
+
+
+
     def get_discounted_spot_rate(self, base_ccy_df_t_s:cls_discount_factor, und_ccy_df_t_s:cls_discount_factor)->cls_fx_rate:
+        # to enhance
         pass
 
     @property
@@ -1349,6 +1362,7 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
         elif self.spot_date_shift == date_shift_enum.D0:
             return cls_discount_factor(self.currency, cls_tenor(self.today_date, self.today_date, "TDY"), 1)
 
+
     def get_discount_factor_by_label(self, tenor_label:str)->cls_discount_factor:
         if tenor_label == 'O/N':
             return self.__get_discount_factor_on()
@@ -1452,7 +1466,10 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
                 discount_factor_iter = discount_factor_today_spot
             else:
 
-                if market_quote_iter.maturity_date <= market_quote_1Y.maturity_date :
+                if market_quote_1Y is None :
+                    discount_factor_iter = market_quote_iter.get_discount_factor_today_maturity(discount_factor_today_spot)
+
+                elif market_quote_iter.maturity_date <= market_quote_1Y.maturity_date :
                     discount_factor_iter = market_quote_iter.get_discount_factor_today_maturity(discount_factor_today_spot)
 
                 else:
