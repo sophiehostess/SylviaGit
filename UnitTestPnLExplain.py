@@ -80,7 +80,7 @@ class Test_cls_fx_forward_pnl_explain1(unittest.TestCase):
         self.assertEqual(round(plexplain.day1_eco_pnl.pnl_value, 2), round(-174854.306721,2))
         self.assertEqual(round(plexplain.pnl_value_by_time, 2), round(3993.2903948,2))
         self.assertEqual(round(plexplain.pnl_value_by_spot_rate, 2), round(108283.9877, 2))
-        self.assertEqual(round(plexplain.pnl_value_by_swap_points, 2), round(53.9752, 2))
+        self.assertEqual(round(plexplain.pnl_value_by_yield_curve, 2), round(53.9752, 2))
         self.assertEqual(round(plexplain.day2_eco_pnl.pnl_value, 2), round(-62523.05343, 2))
         self.assertEqual(round(plexplain.total_pl_movement_value, 2), round(112331.2533, 2))
 
@@ -151,6 +151,6 @@ class Test_cls_fx_forward_pnl_explain2(unittest.TestCase):
         self.assertEqual(round(plexplain.day1_eco_pnl.pnl_value, 2), round(1664369.15255854,2))
         #self.assertEqual(round(plexplain.pnl_value_by_time, 0), round(-197449.5135722,0))
         self.assertEqual(round(plexplain.pnl_value_by_spot_rate, 2), round(-10271915.6091309, 2))
-        self.assertEqual(round(plexplain.pnl_value_by_swap_points, 0), round(1058.408813, 0))
+        self.assertEqual(round(plexplain.pnl_value_by_yield_curve, 0), round(1058.408813, 0))
         self.assertEqual(round(plexplain.day2_eco_pnl.pnl_value, 2), round(-8803937.5613237, 2))
         self.assertEqual(round(plexplain.total_pl_movement_value, 2), round(-10468306.7138901, 2))

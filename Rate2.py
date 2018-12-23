@@ -319,14 +319,14 @@ class cls_single_currency_rate(cls_rate):
 
 class cls_discount_factor(cls_single_currency_rate):
     def get_capitalized_factor(self):
-        return cls_capitalized_factor(self.currency, self.tenor, 1 / self.mid)
+        return cls_capitalized_factor(self.currency, self.tenor, 1 / self.mid, basis=self.basis)
 
     def get_discount_rate(self)->cls_single_currency_rate:
 
         # to review
         return cls_discount_rate(
             self.currency, self.tenor, (1 / self.mid - 1) *
-                                       self.basis / self.tenor.number_of_days)
+                                       self.basis / self.tenor.number_of_days, basis=self.basis)
 
     def get_remaining_df(self, df1, label: str=None):
 
@@ -339,7 +339,7 @@ class cls_discount_factor(cls_single_currency_rate):
                                   self.tenor.maturity_date,
                                   label if label is not None else None)
 
-            return cls_discount_factor(df1.currency, df2_tenor, self.mid / df1.mid)
+            return cls_discount_factor(df1.currency, df2_tenor, self.mid / df1.mid, basis=self.basis)
 
         elif self.tenor.maturity_date == df1.tenor.maturity_date:
 
@@ -347,7 +347,7 @@ class cls_discount_factor(cls_single_currency_rate):
                                   df1.tenor.start_date,
                                   label if label is not None else None)
 
-            return cls_discount_factor(df1.currency, df2_tenor, self.mid / df1.mid)
+            return cls_discount_factor(df1.currency, df2_tenor, self.mid / df1.mid, basis=self.basis)
 
         elif self.tenor.start_date == df1.tenor.start_date and self.tenor.maturity_date == df1.tenor.maturity_date and self.mid != df1.mid:
             logger.critical("parameter df1 tenor start data: %s maturity date: %s match current start date: %s maturity date: %s, but df value %s does not match %s", df1.start_date, df1.maturity_date, self.start_date, self.maturity_date, df1.value, self.value)
@@ -367,14 +367,14 @@ class cls_discount_factor(cls_single_currency_rate):
             df2_tenor = cls_tenor(self.tenor.start_date,
                                   df1.tenor.maturity_date, label if label is not None else None)
 
-            return cls_discount_factor(self.currency, df2_tenor, self.mid * df1.mid)
+            return cls_discount_factor(self.currency, df2_tenor, self.mid * df1.mid, basis=self.basis)
 
         elif df1.tenor.maturity_date == self.tenor.start_date:
 
             df2_tenor = cls_tenor(df1.tenor.start_date,
                                   self.tenor.maturity_date, label if label is not None else None)
 
-            return cls_discount_factor(self.currency, df2_tenor, df1.mid * self.mid)
+            return cls_discount_factor(self.currency, df2_tenor, df1.mid * self.mid, basis=self.basis)
 
         else:
             logger.critical("parameter df1 tenor start data: %s maturity date: %s does not match current start date: %s maturity date: %s", df1.tenor.start_date, df1.tenor.maturity_date, self.tenor.start_date, self.tenor.maturity_date)
@@ -383,37 +383,38 @@ class cls_discount_factor(cls_single_currency_rate):
 
 class cls_capitalized_factor(cls_single_currency_rate):
     def get_discount_factor(self) -> cls_discount_factor:
-        return cls_discount_factor(self.currency, self.tenor, 1 / self.mid)
+        return cls_discount_factor(self.currency, self.tenor, 1 / self.mid, basis=self.basis)
 
     def get_discount_rate(self)->cls_single_currency_rate:
         return cls_discount_rate(
-            self.currency, self.tenor, (self.mid - 1) * self.basis / self.tenor.number_of_days)
+            self.currency, self.tenor, (self.mid - 1) * self.basis / self.tenor.number_of_days, basis=self.basis)
 
 
 class cls_market_quote(cls_single_currency_rate):
-    def get_discount_rate(self,
-                            discount_factor_today_spot: cls_discount_factor)->cls_single_currency_rate:
+    def get_discount_rate(self, discount_factor_today_spot: cls_discount_factor)->cls_single_currency_rate:
 
         # to be reviewed
         if self.maturity_date > discount_factor_today_spot.maturity_date:
             number_of_days_spot_to_maturity = self.tenor.number_of_days
             number_of_days_today_to_maturity = discount_factor_today_spot.tenor.number_of_days + number_of_days_spot_to_maturity
 
-            ds_rate_value = self.currency.number_of_days_1year * (
+            ds_rate_value = self.basis * (
                 1 / discount_factor_today_spot.mid *
-                (1 + self.mid * number_of_days_spot_to_maturity / self.currency.number_of_days_1year) - 1
+                (1 + self.mid * number_of_days_spot_to_maturity / self.basis) - 1
             ) / number_of_days_today_to_maturity
 
             return cls_discount_rate(self.currency,
                                      cls_tenor(discount_factor_today_spot.start_date, self.maturity_date, self.tenor.label ),
-                                     ds_rate_value)
+                                     ds_rate_value,
+                                     basis=self.basis)
 
 
         # for O/N of T+1 currency
         if self.currency.spot_date_shift == date_shift_enum.D1 and self.start_date == discount_factor_today_spot.start_date and self.maturity_date == discount_factor_today_spot.maturity_date:
             return cls_discount_rate(self.currency,
                                      cls_tenor(self.start_date, self.maturity_date, self.tenor.label ),
-                                     self.value)
+                                     self.value,
+                                     basis=self.basis)
 
         # for T/N of T+2 currency
         if  self.currency.spot_date_shift == date_shift_enum.D2 and self.start_date > discount_factor_today_spot.start_date and self.maturity_date == discount_factor_today_spot.maturity_date:
@@ -424,21 +425,22 @@ class cls_market_quote(cls_single_currency_rate):
         if  self.currency.spot_date_shift == date_shift_enum.D2 and self.start_date == discount_factor_today_spot.start_date and self.maturity_date < discount_factor_today_spot.maturity_date:
             return cls_discount_rate(self.currency,
                                      cls_tenor(self.start_date, self.maturity_date, self.tenor.label ),
-                                     self.value)
+                                     self.value,
+                                     basis=self.basis)
 
 
     # only applicable to maturity date <= 1Y
-    def get_discount_factor_today_maturity(self,
-                                           discount_factor_today_spot: cls_discount_factor)->cls_discount_factor:
+    def get_discount_factor_today_maturity(self, discount_factor_today_spot: cls_discount_factor)->cls_discount_factor:
 
         if self.maturity_date > discount_factor_today_spot.maturity_date:
             number_of_days_spot_to_maturity = self.tenor.number_of_days
 
-            ds_factor_value = discount_factor_today_spot.mid * ( 1 / (  1 + self.mid * number_of_days_spot_to_maturity / self.currency.number_of_days_1year) )
+            ds_factor_value = discount_factor_today_spot.mid * ( 1 / (  1 + self.mid * number_of_days_spot_to_maturity / self.basis) )
 
             return cls_discount_factor(self.currency,
-                                     cls_tenor(discount_factor_today_spot.start_date, self.maturity_date, self.tenor.label),
-                                     ds_factor_value)
+                                       cls_tenor(discount_factor_today_spot.start_date, self.maturity_date, self.tenor.label),
+                                       ds_factor_value,
+                                       basis=self.basis)
 
         # for O/N of T+1 currency
         if self.currency.spot_date_shift == date_shift_enum.D1 and self.start_date == discount_factor_today_spot.start_date and self.maturity_date == discount_factor_today_spot.maturity_date:
@@ -448,17 +450,19 @@ class cls_market_quote(cls_single_currency_rate):
         if  self.currency.spot_date_shift == date_shift_enum.D2 and self.start_date > discount_factor_today_spot.start_date and self.maturity_date == discount_factor_today_spot.maturity_date:
             number_of_days_tom_to_next = self.tenor.number_of_days
 
-            ds_factor_value = discount_factor_today_spot.mid / (1 / (1 + self.mid * number_of_days_tom_to_next / self.currency.number_of_days_1year) )
+            ds_factor_value = discount_factor_today_spot.mid / (1 / (1 + self.mid * number_of_days_tom_to_next / self.basis) )
 
             return cls_discount_factor(self.currency,
                                      cls_tenor(discount_factor_today_spot.start_date, self.maturity_date, self.tenor.label),
-                                     ds_factor_value)
+                                     ds_factor_value,
+                                     basis=self.basis)
 
         # for O/N of T+2 currency
         if  self.currency.spot_date_shift == date_shift_enum.D2 and self.start_date == discount_factor_today_spot.start_date and self.maturity_date < discount_factor_today_spot.maturity_date:
             return cls_discount_factor(self.currency,
-                                     cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
-                                     self.mid)
+                                      cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
+                                      self.mid,
+                                      basis=self.basis)
 
 
     # only applicable to maturity date <= 1Y
@@ -467,24 +471,28 @@ class cls_market_quote(cls_single_currency_rate):
         number_of_days_spot_to_maturity = self.tenor.number_of_days
 
         if ds_factor_value_input is None:
-            ds_factor_value = 1 / (  1 + self.mid * number_of_days_spot_to_maturity / self.currency.number_of_days_1year)
+            ds_factor_value = 1 / (  1 + self.mid * number_of_days_spot_to_maturity / self.basis)
         else:
             ds_factor_value = ds_factor_value_input
 
         return cls_discount_factor(self.currency,
-                                 cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
-                                 ds_factor_value)
+                                   cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
+                                   ds_factor_value,
+                                   basis=self.basis)
 
 
 class cls_discount_rate(cls_single_currency_rate):
     def get_discount_factor(self)->cls_discount_factor:
-        return cls_discount_factor(
-            self.currency, self.tenor,
-            1 / (1 + self.mid * self.tenor.number_of_days / self.basis))
+        return cls_discount_factor(self.currency,
+                                   self.tenor,
+                                   1 / (1 + self.mid * self.tenor.number_of_days / self.basis),
+                                   basis=self.basis)
 
     def get_capitalized_factor(self)->cls_capitalized_factor:
-        return cls_capitalized_factor(
-            self.currency, self.tenor, 1 + self.mid * self.basis / self.tenor.number_of_days)
+        return cls_capitalized_factor(self.currency,
+                                      self.tenor,
+                                      1 + self.mid * self.basis / self.tenor.number_of_days,
+                                      basis=self.basis)
 
     def get_market_quote(self, discount_factor_today_spot: cls_discount_factor
                          ) -> cls_market_quote:
@@ -495,21 +503,22 @@ class cls_discount_rate(cls_single_currency_rate):
 
 
             # to review
-            market_quote_value = self.currency.number_of_days_1year * (
+            market_quote_value = self.basis * (
                 discount_factor_today_spot.mid *
-                (1 + self.mid * number_of_days_today_to_maturity / self.currency.number_of_days_1year) - 1
+                (1 + self.mid * number_of_days_today_to_maturity / self.basis) - 1
             ) / number_of_days_spot_to_maturity
 
-            return cls_market_quote(
-                self.currency,
-                cls_tenor(discount_factor_today_spot.tenor.maturity_date,
-                          self.tenor.maturity_date), market_quote_value)
+            return cls_market_quote(self.currency,
+                                    cls_tenor(discount_factor_today_spot.tenor.maturity_date,
+                                    self.tenor.maturity_date), market_quote_value,
+                                    basis=self.basis)
 
         # for O/N of T+1 currency
         if self.currency.spot_date_shift == date_shift_enum.D1 and self.start_date == discount_factor_today_spot.start_date and self.maturity_date == discount_factor_today_spot.maturity_date:
             return cls_market_quote(self.currency,
-                                     cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
-                                     self.mid)
+                                    cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
+                                    self.mid,
+                                    basis=self.basis)
 
         # for T/N of T+2 currency
         if  self.currency.spot_date_shift == date_shift_enum.D2 and self.start_date > discount_factor_today_spot.start_date and self.maturity_date == discount_factor_today_spot.maturity_date:
@@ -519,8 +528,9 @@ class cls_discount_rate(cls_single_currency_rate):
         # for O/N of T+2 currency
         if  self.currency.spot_date_shift == date_shift_enum.D2 and self.start_date == discount_factor_today_spot.start_date and self.maturity_date < discount_factor_today_spot.maturity_date:
             return cls_market_quote(self.currency,
-                                     cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
-                                     self.mid)
+                                    cls_tenor(self.start_date, self.maturity_date, self.tenor.label),
+                                    self.mid,
+                                    basis=self.basis)
 
 
 class cls_overnight_funding_rate(cls_single_currency_rate):
@@ -1066,8 +1076,9 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
     def __init__(self,
                  currency: cls_currency,
                  fx_rate_list: list,
-                 linearization: linearization_enum):
-        super().__init__(currency, fx_rate_list)
+                 linearization: linearization_enum,
+                 basis: int = None):
+        super().__init__(currency, fx_rate_list, basis)
         self.linearization = linearization
 
     def get_discount_factor_by_interpolation(
@@ -1075,11 +1086,12 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
             df_early: cls_discount_factor,
             df_late: cls_discount_factor,
             tenor_mid: cls_tenor,
-            linearization: linearization_enum)->cls_discount_factor:
+            linearization: linearization_enum,
+            basis:int)->cls_discount_factor:
 
         if linearization == linearization_enum.log_ds_factor:
             value_of_df_mid = 10 ** ((math.log10(df_late.mid) - math.log10(df_early.mid)) / (df_late.tenor.number_of_days - df_early.tenor.number_of_days) * (tenor_mid.number_of_days - df_early.tenor.number_of_days) + math.log10(df_early.mid))
-            return cls_discount_factor(df_early.currency, tenor_mid, value_of_df_mid)
+            return cls_discount_factor(df_early.currency, tenor_mid, value_of_df_mid, basis=basis)
 
         elif linearization == linearization_enum.linear_ds_rate:
 
@@ -1092,7 +1104,7 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
             ) * (tenor_mid.number_of_days - ds_rate_early.tenor.number_of_days
                  ) + ds_rate_early.mid
 
-            return cls_discount_rate(df_early.currency, tenor_mid, value_of_ds_mid).get_discount_factor()
+            return cls_discount_rate(df_early.currency, tenor_mid, value_of_ds_mid, basis=basis).get_discount_factor()
 
         elif linearization == linearization_enum.linear_rate_time:
             #to be enhanced
@@ -1118,12 +1130,12 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
 
             if maturity_date == tenor_mid.start_date:
                 # print("maturity_date == tenor_mid.start_date")
-                return cls_discount_factor(self.currency, cls_tenor(tenor_mid.start_date, maturity_date), 1)
+                return cls_discount_factor(self.currency, cls_tenor(tenor_mid.start_date, maturity_date), 1, basis=self.basis)
             elif maturity_date > self.max_maturiy_date:
                 # print("The target maturity date is ", maturity_date, ". The max maturity date in curve is ", tenor_mid.maturity_date)
                 # need extrapolation
 
-                return self.get_discount_factor_by_interpolation(self.fx_rate_list[-2], self.fx_rate_list[-1], tenor_mid, self.linearization)
+                return self.get_discount_factor_by_interpolation(self.fx_rate_list[-2], self.fx_rate_list[-1], tenor_mid, self.linearization, self.basis)
 
             else:
                 # find out the discount factor earlier than target one , and the one later than target one
@@ -1139,7 +1151,7 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
                         # print("df_early's maturity date is " +
                         #      df_early.tenor.maturity_date.strftime('%Y-%m-%d'))
 
-                        return self.get_discount_factor_by_interpolation(df_early, df_late, tenor_mid, self.linearization)
+                        return self.get_discount_factor_by_interpolation(df_early, df_late, tenor_mid, self.linearization, self.basis)
 
                     previous_df = ds_factor_iter
 
@@ -1157,7 +1169,7 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
         if start_date != maturity_date:
             df_start_maturity = df_today_maturity.get_remaining_df(df_today_start, df_today_maturity.tenor.label)
         else:
-            df_start_maturity = cls_discount_factor(self.currency, cls_tenor(start_date, start_date), 1)
+            df_start_maturity = cls_discount_factor(self.currency, cls_tenor(start_date, start_date), 1, basis=self.basis)
         # print("get_discount_factor_by_tenor ", "df_start_maturity.tenor.start_date is ", df_start_maturity.tenor.start_date, "df_start_maturity.tenor.maturity_date is ", df_start_maturity.tenor.maturity_date)
 
         return df_start_maturity
@@ -1243,15 +1255,17 @@ class cls_capitalized_factor_curve(cls_single_currency_rate_curve):
     def __init__(self,
                  currency: cls_currency,
                  fx_rate_list: list,
-                 linearization: linearization_enum):
+                 linearization: linearization_enum,
+                 basis: int=None):
 
-        super().__init__(currency, fx_rate_list)
+        super().__init__(currency, fx_rate_list, basis)
         self.linearization = linearization
-        self.discount_factor_curve = cls_discount_factor_curve(
-            currency, [
-                capitalized_factor_iter.get_discount_factor_by_label()
-                for capitalized_factor_iter in self.fx_rate_list
-                ], linearization)
+        self.discount_factor_curve = cls_discount_factor_curve(currency, [capitalized_factor_iter.get_discount_factor_by_label()
+                                                                          for capitalized_factor_iter in self.fx_rate_list
+                                                                         ],
+                                                               linearization,
+                                                               basis
+                                                               )
 
     def get_capitalized_factor_by_maturity_date(self, maturity_date: datetime.date) -> cls_capitalized_factor:
         return self.discount_factor_curve.get_discount_factor_by_maturity_date(
@@ -1314,9 +1328,10 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
 
     def __init__(self,
                  currency: cls_currency,
-                 fx_rate_list: list):
+                 fx_rate_list: list,
+                 basis: int=None):
 
-        super().__init__(currency, fx_rate_list)
+        super().__init__(currency, fx_rate_list, basis)
 
     def get_market_quote_by_label(self, label: str) -> cls_market_quote:
 
@@ -1333,7 +1348,7 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
 
         return cls_discount_factor(
             self.currency, market_quote_on.tenor,
-            1 / (1 + market_quote_on.mid * market_quote_on.tenor.number_of_days / market_quote_on.currency.number_of_days_1year))
+            1 / (1 + market_quote_on.mid * market_quote_on.tenor.number_of_days / market_quote_on.basis), basis=self.basis)
 
     def __get_discount_factor_tn(self, ds_factor_on:cls_discount_factor)->cls_discount_factor:
 
@@ -1341,10 +1356,10 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
         if market_quote_tn is not None :
             ds_factor_tomorrow_next = cls_discount_factor(
             self.currency, market_quote_tn.tenor,
-            1 / (1 + market_quote_tn.mid * market_quote_tn.tenor.number_of_days / market_quote_tn.currency.number_of_days_1year))
+            1 / (1 + market_quote_tn.mid * market_quote_tn.tenor.number_of_days / market_quote_tn.basis), basis=self.basis)
         else:
             ds_factor_tomorrow_next = cls_discount_factor(
-            self.currency, cls_tenor(ds_factor_on.tenor.maturity_date,ds_factor_on.tenor.maturity_date),1 )
+            self.currency, cls_tenor(ds_factor_on.tenor.maturity_date,ds_factor_on.tenor.maturity_date),1 , basis=self.basis)
 
         return ds_factor_on.extend_by_df(ds_factor_tomorrow_next,"T/N")
 
@@ -1360,7 +1375,7 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
             return self.__get_discount_factor_tn(ds_factor_on)
 
         elif self.spot_date_shift == date_shift_enum.D0:
-            return cls_discount_factor(self.currency, cls_tenor(self.today_date, self.today_date, "TDY"), 1)
+            return cls_discount_factor(self.currency, cls_tenor(self.today_date, self.today_date, "TDY"), 1, basis=self.basis)
 
 
     def get_discount_factor_by_label(self, tenor_label:str)->cls_discount_factor:
@@ -1451,7 +1466,12 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
 
 
 
-    def get_discount_factor_curve(self, linearization:linearization_enum) -> cls_discount_factor_curve:
+    def get_discount_factor_curve(self, linearization:linearization_enum, basis_input:int=None) -> cls_discount_factor_curve:
+
+        if basis_input is None:
+            basis = self.basis
+        else:
+            basis = basis_input
 
         discount_factor_today_spot = self.get_discount_factor_today_spot()
 
@@ -1483,7 +1503,7 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
 
             #print("--", df_iter.tenor.label, df_iter.mid )
 
-        return cls_discount_factor_curve(self.currency, ds_factor_list, linearization)
+        return cls_discount_factor_curve(self.currency, ds_factor_list, linearization, basis)
 
     @property
     def spot_date(self)->datetime.date:
@@ -1788,9 +1808,16 @@ class cls_swap_point_panel(cls_rate_curve):
 
 
     # get underlying currency discount factor curve by base currency discount factor curve and swap point
-    def get_und_df_curve_by_swap_point_list(self, linearization_of_df_curve_und:linearization_enum)->cls_discount_factor_curve:
+    def get_und_df_curve_by_swap_point_list(self, linearization_of_df_curve_und:linearization_enum, basis_input: int=None)->cls_discount_factor_curve:
 
         und_ccy = self.currency_pair.underlying
+
+        if basis_input is None :
+            basis = und_ccy.number_of_days_1year
+        else:
+            basis = basis_input
+
+
         df_list_und = []
 
         swap_point_on = self.get_swap_point_from_list_by_tenor_label("O/N")
@@ -1825,11 +1852,11 @@ class cls_swap_point_panel(cls_rate_curve):
             pass
 
         if und_ccy.spot_date_shift == date_shift_enum.D2:
-            df_und_today_spot = cls_discount_factor(und_ccy, cls_tenor(self.today_date, self.spot_date, "T/N"), df_und_today_spot_value)
+            df_und_today_spot = cls_discount_factor(und_ccy, cls_tenor(self.today_date, self.spot_date, "T/N"), df_und_today_spot_value, basis=basis)
         elif und_ccy.spot_date_shift == date_shift_enum.D1:
-            df_und_today_spot = cls_discount_factor(und_ccy, cls_tenor(self.today_date, self.spot_date, "O/N"), df_und_today_spot_value)
+            df_und_today_spot = cls_discount_factor(und_ccy, cls_tenor(self.today_date, self.spot_date, "O/N"), df_und_today_spot_value, basis=basis)
         elif und_ccy.spot_date_shift == date_shift_enum.D0:
-            df_und_today_spot = cls_discount_factor(und_ccy, cls_tenor(self.today_date, self.spot_date, "TDY"), 1)
+            df_und_today_spot = cls_discount_factor(und_ccy, cls_tenor(self.today_date, self.spot_date, "TDY"), 1, basis=basis)
         else:
             pass
 
@@ -1860,7 +1887,7 @@ class cls_swap_point_panel(cls_rate_curve):
 
                 df_und_today_tom_value = df_und_today_spot.value / df_und_tom_spot_value
 
-                df_und_today_tom = cls_discount_factor(und_ccy, cls_tenor(self.today_date, swap_point_iter.maturity_date, "O/N"), df_und_today_tom_value)
+                df_und_today_tom = cls_discount_factor(und_ccy, cls_tenor(self.today_date, swap_point_iter.maturity_date, "O/N"), df_und_today_tom_value, basis=basis)
 
                 #print("df_und_on_value={df_und_on_value}".format(df_und_on_value=df_und_today_tom_value))
                 df_list_und.append(df_und_today_tom) # append discount factor "O/N" to result
@@ -1877,11 +1904,14 @@ class cls_swap_point_panel(cls_rate_curve):
 
                 df_und_today_maturity_value = df_und_today_spot_value * df_und_spot_maturity_value
 
-                df_und_today_maturity = cls_discount_factor(und_ccy, cls_tenor(self.today_date, swap_point_iter.maturity_date, swap_point_iter.label), df_und_today_maturity_value)
+                df_und_today_maturity = cls_discount_factor(und_ccy,
+                                                            cls_tenor(self.today_date, swap_point_iter.maturity_date, swap_point_iter.label),
+                                                            df_und_today_maturity_value,
+                                                            basis=basis)
 
                 df_list_und.append(df_und_today_maturity) # append discount factor greater than "T/N" to result
 
-        df_curve_und = cls_discount_factor_curve(und_ccy, df_list_und, linearization_of_df_curve_und)
+        df_curve_und = cls_discount_factor_curve(und_ccy, df_list_und, linearization_of_df_curve_und, basis=basis)
         return df_curve_und
 
     def get_and_set_und_df_curve_by_swap_point_list(self, linearization_of_df_curve_und:linearization_enum):
@@ -1894,11 +1924,13 @@ def create_swap_point_panel_by_market_quote_curves(currency_pair: cls_currency_p
                                                    mq_curve_und_ccy: cls_market_quote_curve,
                                                    df_curve_base_linearization: linearization_enum = linearization_enum.log_ds_factor,
                                                    df_curve_und_linearization: linearization_enum = linearization_enum.log_ds_factor,
+                                                   df_curve_base_basis: int=None,
+                                                   df_curve_und_basis: int=None,
                                                    set_swap_point_list_when_initial: bool = False
                                                    )->cls_swap_point_panel:
 
-    df_curve_base_ccy = mq_curve_base_ccy.get_discount_factor_curve(df_curve_base_linearization)
-    df_curve_und_ccy = mq_curve_und_ccy.get_discount_factor_curve(df_curve_und_linearization)
+    df_curve_base_ccy = mq_curve_base_ccy.get_discount_factor_curve(df_curve_base_linearization,df_curve_base_basis)
+    df_curve_und_ccy = mq_curve_und_ccy.get_discount_factor_curve(df_curve_und_linearization, df_curve_und_basis)
 
     return cls_swap_point_panel(currency_pair, spot_rate_input, df_curve_base_ccy, df_curve_und_ccy, set_swap_point_list_when_initial)
 
@@ -1950,7 +1982,7 @@ class cls_market_quote_curve_dict(cls_rate_dict):
         df_curve_dict = cls_discount_factor_curve_dict(self.today_date)
 
         for ccy_label, mq_curve_iter in self.curve_dict.items():
-            df_curve_iter = mq_curve_iter.get_discount_factor_curve(linearization)
+            df_curve_iter = mq_curve_iter.get_discount_factor_curve(linearization, mq_curve_iter.basis)
             if ccy_label in df_curve_dict.curve_dict:
                 assert("ccy_name {ccy_name} is already in df_curve_dict".format(ccy_name=ccy_label))
             else:

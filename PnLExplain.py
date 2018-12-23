@@ -42,8 +42,8 @@ class cls_fx_forward_pnl_explain():
         day2_base_ccy_df_curve = day2_base_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
         day2_und_ccy_df_curve = day2_und_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
 
-        self.day1_spot_rate = day1_spot_rate#.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
-        self.day2_spot_rate = day2_spot_rate#.get_fx_rate_by_quotation_mode(Rate.quotation_mode_enum.base_und)
+        self.day1_spot_rate = day1_spot_rate
+        self.day2_spot_rate = day2_spot_rate
 
         self.day1_eco_pnl = PnL.create_trade_eco_pnl_from_df_curves(self.trade,
                                                                     self.day1_spot_rate,
@@ -85,7 +85,7 @@ class cls_fx_forward_pnl_explain():
 
         eco_pnl_value_by_spot_rate_movement = self.spot_rate_shifted_eco_pnl.pnl_value - self.date_shifted_eco_pnl.pnl_value
 
-        eco_pnl_value_by_swap_points_movement = self.day2_eco_pnl.pnl_value - self.spot_rate_shifted_eco_pnl.pnl_value
+        eco_pnl_value_by_yield_curve_movement = self.day2_eco_pnl.pnl_value - self.spot_rate_shifted_eco_pnl.pnl_value
 
 
         pnl_currency = day1_base_ccy_df_curve.currency
@@ -95,8 +95,8 @@ class cls_fx_forward_pnl_explain():
         self.eco_pnl_by_spot_rate_movement = PnL.cls_pnl(pnl_currency, self.day2_date)
         self.eco_pnl_by_spot_rate_movement.pnl_value = eco_pnl_value_by_spot_rate_movement
 
-        self.eco_pnl_by_swap_points_movement = PnL.cls_pnl(pnl_currency, self.day2_date)
-        self.eco_pnl_by_swap_points_movement.pnl_value = eco_pnl_value_by_swap_points_movement
+        self.eco_pnl_by_yield_curve_movement = PnL.cls_pnl(pnl_currency, self.day2_date)
+        self.eco_pnl_by_yield_curve_movement.pnl_value = eco_pnl_value_by_yield_curve_movement
 
 
     def __create_date_shifted_market_quote_curve(self,
@@ -126,8 +126,8 @@ class cls_fx_forward_pnl_explain():
         return self.eco_pnl_by_spot_rate_movement.pnl_value
 
     @property
-    def pnl_value_by_swap_points(self)->float:
-        return self.eco_pnl_by_swap_points_movement.pnl_value
+    def pnl_value_by_yield_curve(self)->float:
+        return self.eco_pnl_by_yield_curve_movement.pnl_value
 
     @property
     def day1_pnl_value(self)->float:
