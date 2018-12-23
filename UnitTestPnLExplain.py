@@ -74,6 +74,8 @@ class Test_cls_fx_forward_pnl_explain1(unittest.TestCase):
                                                           day2_spot_rate,
                                                           day2_mq_usd_curve,
                                                           day2_mq_xau_curve,
+                                                          360,
+                                                          360,
                                                           Rate.linearization_enum.log_ds_factor
                                                           )
 
@@ -145,6 +147,8 @@ class Test_cls_fx_forward_pnl_explain2(unittest.TestCase):
                                                           day2_spot_rate,
                                                           day2_mq_usd_curve,
                                                           day2_mq_chf_curve,
+                                                          360,
+                                                          360,
                                                           Rate.linearization_enum.log_ds_factor
                                                           )
 

@@ -19,6 +19,8 @@ class cls_fx_forward_pnl_explain():
                  day2_spot_rate:Rate.cls_fx_spot_rate,
                  day2_base_ccy_market_quote_curve:Rate.cls_market_quote_curve,
                  day2_und_ccy_market_quote_curve:Rate.cls_market_quote_curve,
+                 base_ccy_curve_basis:int=None,
+                 und_ccy_curve_basis: int=None,
                  rate_curve_linearization:Rate.linearization_enum=Rate.linearization_enum.log_ds_factor
                  ):
 
@@ -37,10 +39,10 @@ class cls_fx_forward_pnl_explain():
         self.day1_date = day1_date
         self.day2_date = day2_date
 
-        day1_base_ccy_df_curve = day1_base_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
-        day1_und_ccy_df_curve = day1_und_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
-        day2_base_ccy_df_curve = day2_base_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
-        day2_und_ccy_df_curve = day2_und_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
+        day1_base_ccy_df_curve = day1_base_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, base_ccy_curve_basis)
+        day1_und_ccy_df_curve = day1_und_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, und_ccy_curve_basis)
+        day2_base_ccy_df_curve = day2_base_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, base_ccy_curve_basis)
+        day2_und_ccy_df_curve = day2_und_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, und_ccy_curve_basis)
 
         self.day1_spot_rate = day1_spot_rate
         self.day2_spot_rate = day2_spot_rate
@@ -55,8 +57,8 @@ class cls_fx_forward_pnl_explain():
         day1_base_ccy_date_shifted_market_quote_curve = self.__create_date_shifted_market_quote_curve(day1_base_ccy_market_quote_curve, day2_base_ccy_market_quote_curve)
         day1_und_ccy_date_shifted_market_quote_curve = self.__create_date_shifted_market_quote_curve(day1_und_ccy_market_quote_curve, day2_und_ccy_market_quote_curve)
 
-        day1_base_ccy_date_shifted_df_curve = day1_base_ccy_date_shifted_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
-        day1_und_ccy_date_shifted_df_curve = day1_und_ccy_date_shifted_market_quote_curve.get_discount_factor_curve(rate_curve_linearization)
+        day1_base_ccy_date_shifted_df_curve = day1_base_ccy_date_shifted_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, base_ccy_curve_basis)
+        day1_und_ccy_date_shifted_df_curve = day1_und_ccy_date_shifted_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, und_ccy_curve_basis)
 
 
         self.date_shifted_eco_pnl = PnL.create_trade_eco_pnl_from_df_curves(self.trade,
