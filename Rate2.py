@@ -801,8 +801,13 @@ class cls_fx_spot_rate(cls_fx_rate):
 
 
     def get_discounted_spot_rate(self, base_ccy_df_t_s:cls_discount_factor, und_ccy_df_t_s:cls_discount_factor)->cls_fx_rate:
-        # to enhance
-        pass
+
+        tenor = cls_tenor(self.start_date, self.start_date)
+
+        if self.quotation_mode == quotation_mode_enum.base_und :
+            return self.get_spot_cls(cls_fx_rate(self.currency_pair, tenor, self.mid * und_ccy_df_t_s.value / base_ccy_df_t_s.value, quotation_mode=self.quotation_mode))
+        else:
+            return self.get_spot_cls(cls_fx_rate(self.currency_pair, tenor, self.mid * base_ccy_df_t_s.value / und_ccy_df_t_s.value, quotation_mode=self.quotation_mode))
 
     @property
     def spot_date(self)->datetime.date:

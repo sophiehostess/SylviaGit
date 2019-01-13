@@ -158,3 +158,7 @@ class Test_cls_fx_forward_pnl_explain2(unittest.TestCase):
         self.assertEqual(round(plexplain.pnl_value_by_yield_curve, 0), round(1058.408813, 0))
         self.assertEqual(round(plexplain.day2_eco_pnl.pnl_value, 2), round(-8803937.5613237, 2))
         self.assertEqual(round(plexplain.total_pl_movement_value, 2), round(-10468306.7138901, 2))
+
+
+if __name__ == '__main__':
+    unittest.main()
