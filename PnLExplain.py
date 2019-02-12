@@ -3,6 +3,7 @@
 
 import datetime
 from log4py import logger
+import copy
 import Rate2 as Rate
 import Trade as Trade
 import PnL as PnL
@@ -105,8 +106,8 @@ class cls_fx_forward_pnl_explain():
                                                  day1_market_quote_curve,
                                                  day2_market_quote_curve,
                                                  )->Rate.cls_market_quote_curve:
-
-        result_mq_curve = day1_market_quote_curve
+        # use deepcopy to ensure not affecting the original curve
+        result_mq_curve = copy.deepcopy(day1_market_quote_curve)
         result_rate_list = []
 
         for day2_mq in day2_market_quote_curve.fx_rate_list:
