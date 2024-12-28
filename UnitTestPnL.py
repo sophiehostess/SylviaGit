@@ -11,6 +11,27 @@ import PnL as PnL
 
 
 class Test_cls_fx_trade_eco_pnl1(unittest.TestCase):
+    """
+    Test class for validating economic PnL calculations for FX trades.
+    
+    This test class verifies the calculation of economic profit and loss (PnL) 
+    for foreign exchange trades, specifically focusing on:
+    - Accounting PnL calculations
+    - Economic PnL calculations with discount factors
+    - Currency pair handling (EUR/USD)
+    
+    The test uses a sample FX trade with the following characteristics:
+    - Trade amount: EUR 1000 vs USD -1200 
+    - Base currency: USD
+    - Quote currency: EUR
+    - Contract price: 1.20 (EUR/USD)
+    - Market forward rate: 1.50 (EUR/USD)
+    
+    The test validates:
+    1. Correct PnL currency labeling
+    2. Base currency accounting PnL calculation
+    3. Economic PnL calculation with discount factors
+    """
     
     def test_init(self):
 
@@ -365,7 +386,7 @@ class Test_create_trade_eco_pnl_from_swap_point_panel(unittest.TestCase):
         df_usd_20170615 = df_curve_usd.get_discount_factor_by_maturity_date(datetime.date(2017, 6, 15))
         # print("df_usd_20170725 is ",  df_usd_20170725.mid)
 
-        # self.assertEqual(round(df_usd_20170725.mid, 9), round(0.998657734071825, 9))
+        #self.assertEqual(round(df_usd_20170725.mid, 9), round(0.998657734071825, 9))
 
         sgd_ccy = Rate.cls_currency("SGD", 365, Rate.date_shift_enum.D2)
 
@@ -389,7 +410,7 @@ class Test_create_trade_eco_pnl_from_swap_point_panel(unittest.TestCase):
         df_sgd_20170615 = df_curve_sgd.get_discount_factor_by_maturity_date(datetime.date(2017, 6, 15))
         # print("df_sgd_20170725 is ",  df_sgd_20170725.mid)
 
-        # self.assertEqual(round(df_sgd_20170725.mid, 9), round(0.999174965538092, 9))
+        #self.assertEqual(round(df_sgd_20170725.mid, 9), round(0.999174965538092, 9))
 
         usdsgd = Rate.cls_currency_pair(usd_ccy, sgd_ccy, Rate.quotation_mode_enum.base_und, 10000)
 
@@ -448,7 +469,7 @@ class Test_create_trade_eco_pnl_from_df_curve_dict(unittest.TestCase):
         df_usd_20170615 = df_curve_usd.get_discount_factor_by_maturity_date(datetime.date(2017, 6, 15))
         # print("df_usd_20170725 is ",  df_usd_20170725.mid)
 
-        # self.assertEqual(round(df_usd_20170725.mid, 9), round(0.998657734071825, 9))
+        #self.assertEqual(round(df_usd_20170725.mid, 9), round(0.998657734071825, 9))
 
         sgd_ccy = Rate.cls_currency("SGD", 365, Rate.date_shift_enum.D2)
 
@@ -472,7 +493,7 @@ class Test_create_trade_eco_pnl_from_df_curve_dict(unittest.TestCase):
         df_sgd_20170615 = df_curve_sgd.get_discount_factor_by_maturity_date(datetime.date(2017, 6, 15))
         # print("df_sgd_20170725 is ",  df_sgd_20170725.mid)
 
-        # self.assertEqual(round(df_sgd_20170725.mid, 9), round(0.999174965538092, 9))
+        #self.assertEqual(round(df_sgd_20170725.mid, 9), round(0.999174965538092, 9))
 
         usdsgd = Rate.cls_currency_pair(usd_ccy, sgd_ccy, Rate.quotation_mode_enum.base_und, 10000)
 

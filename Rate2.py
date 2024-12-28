@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
@@ -41,7 +40,7 @@ class base_or_und_enum(Enum):
     base = "base"
     und = "und"
 
-class discount_factor_methedology(Enum):
+class discount_factor_methodology(Enum):
     lin_act_365 = "LIN ACT/365"
     lin_act_360 = "LIN ACT/360"
     exp_act_365 = "EXP ACT/365"
@@ -850,7 +849,7 @@ class cls_fx_forward_rate(cls_fx_rate):
 
     @property
     def swap_point_value_with_factor(self)->float:
-        #mutiplied with swap point factor
+        #multiplied with swap point factor
         return self.__swap_point.mid
 
     @property
@@ -875,9 +874,19 @@ class cls_fx_forward_rate(cls_fx_rate):
     def set_forward_rate_by_spot_and_df(
             self,
             spot_rate: cls_fx_spot_rate,
-            base_ccy_df_s_m: cls_discount_factor, #base currency discount factor spot date to maturity date
-            und_ccy_df_s_m: cls_discount_factor): #underlying currency discount factor spot date to maturity date
+            base_ccy_df_s_m: cls_discount_factor, # Discount factor for base currency from maturity date to spot date
+            und_ccy_df_s_m: cls_discount_factor): # Discount factor for underlying currency from maturity date to spot date
+        """
+        Sets the forward rate using spot rate and discount factors.
 
+        Args:
+            spot_rate: The spot exchange rate
+            base_ccy_df_s_m: Discount factor for base currency, discounted from maturity date to spot date
+            und_ccy_df_s_m: Discount factor for underlying currency, discounted from maturity date to spot date
+
+        The forward rate is calculated by adjusting the spot rate with the ratio of discount factors
+        between the base and underlying currencies over the period from spot to maturity date.
+        """
         spot_rate_with_aligned_quotation_mode = spot_rate.get_fx_rate_by_quotation_mode(self.currency_pair.quotation_mode)
 
         # quotation is base-und
@@ -959,12 +968,47 @@ def create_forward_rate_by_discounted_spot_and_df(currency_pair: cls_currency_pa
 
 
 class cls_fx_discounted_spot_rate(cls_fx_forward_rate):
+    """
+    A class representing a discounted spot rate for FX trades.
+    
+    This class inherits from cls_fx_forward_rate and represents the spot rate 
+    discounted to the current date (today). The discounted spot rate is used 
+    for calculating present values and mark-to-market valuations of FX trades.
+
+    Attributes:
+        currency_pair (cls_currency_pair): The currency pair for the rate
+        tenor (cls_tenor): The time period for the rate
+        mid (float): The mid-market rate value
+        bid (float): The bid rate value
+        ask (float): The ask rate value
+        
+    Notes:
+        - The tenor label is always set to "TDY" (today) since this represents 
+          a spot rate discounted to the current date
+        - Used in PnL calculations to determine the present value of future 
+          cash flows
+        - Inherits rate handling functionality from cls_fx_forward_rate
+    """
     def __init__(self,
                  currency_pair: cls_currency_pair,
-                 tenor: cls_tenor,
+                 tenor: cls_tenor, 
                  mid: float=0,
                  bid: float=0,
                  ask: float=0):
+        """
+        Initialize a discounted spot rate.
+
+        Args:
+            currency_pair: The currency pair for the rate (e.g. EUR/USD)
+            tenor: The time period for the rate
+            mid: The mid-market rate value, defaults to 0
+            bid: The bid rate value, defaults to 0  
+            ask: The ask rate value, defaults to 0
+
+        Notes:
+            The tenor label is set to "TDY" on initialization to indicate 
+            this is a today-discounted rate.
+        """
         super().__init__(currency_pair, tenor, mid, bid, ask)
         self.tenor.label = "TDY"
 
@@ -1044,7 +1088,7 @@ class cls_rate_curve:
             self.fx_rate_list = []
 
     @property
-    def max_maturiy_date(self)->datetime.date:
+    def max_maturity_date(self)->datetime.date:
         return self.fx_rate_list[-1].tenor.maturity_date
 
 
@@ -1136,7 +1180,7 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
             if maturity_date == tenor_mid.start_date:
                 # print("maturity_date == tenor_mid.start_date")
                 return cls_discount_factor(self.currency, cls_tenor(tenor_mid.start_date, maturity_date), 1, basis=self.basis)
-            elif maturity_date > self.max_maturiy_date:
+            elif maturity_date > self.max_maturity_date:
                 # print("The target maturity date is ", maturity_date, ". The max maturity date in curve is ", tenor_mid.maturity_date)
                 # need extrapolation
 
@@ -1248,12 +1292,35 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
 
     @property
     def spot_date(self) -> datetime.date:
-        if self.spot_date_shift == date_shift_enum.D1 :
-            return self.get_discount_factor_by_label('O/N').tenor.maturity_date
-        elif self.spot_date_shift == date_shift_enum.D2 :
-            return self.get_discount_factor_by_label('T/N').tenor.maturity_date
-        elif self.spot_date_shift == date_shift_enum.D0 :
-            return self.get_discount_factor_by_label('O/N').tenor.start_date
+        """
+        Gets the spot date based on the spot date shift convention.
+        
+        Returns:
+            datetime.date: The spot date determined by the following rules:
+            - For T+1 currencies (D1): Returns the maturity date of O/N rate
+            - For T+2 currencies (D2): Returns the maturity date of T/N rate  
+            - For T+0 currencies (D0): Returns the start date of O/N rate
+            
+        Raises:
+            AssertionError: If the spot_date_shift is not one of the valid enum values
+            
+        Notes:
+            - O/N = Overnight rate
+            - T/N = Tomorrow/Next rate
+            - The spot date is when FX trades typically settle
+            - Different currencies have different standard settlement periods (T+0, T+1, T+2)
+        """
+        if self.spot_date_shift == date_shift_enum.D1:
+            return self.get_market_quote_by_label('O/N').tenor.maturity_date
+
+        elif self.spot_date_shift == date_shift_enum.D2:
+            return self.get_market_quote_by_label('T/N').tenor.maturity_date
+
+        elif self.spot_date_shift == date_shift_enum.D0:
+            return self.get_market_quote_by_label('O/N').tenor.start_date
+
+        else:
+            assert("invalid spot date shift")
 
 
 class cls_capitalized_factor_curve(cls_single_currency_rate_curve):
@@ -1465,7 +1532,7 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
                 mq_result_list.reverse()
                 return mq_result_list
 
-            # oherwise continue to get the tenor(s) until it is within 1Y
+            # otherwise continue to get the tenor(s) until it is within 1Y
             else:
                 return self.get_market_quote_list_backwardshifted(shifted_tenor_label, mq_result_list)
 
@@ -1512,6 +1579,24 @@ class cls_market_quote_curve(cls_single_currency_rate_curve):
 
     @property
     def spot_date(self)->datetime.date:
+        """
+        Gets the spot date based on the spot date shift convention.
+        
+        Returns:
+            datetime.date: The spot date determined by the following rules:
+            - For T+1 currencies (D1): Returns the maturity date of O/N rate
+            - For T+2 currencies (D2): Returns the maturity date of T/N rate  
+            - For T+0 currencies (D0): Returns the start date of O/N rate
+            
+        Raises:
+            AssertionError: If the spot_date_shift is not one of the valid enum values
+            
+        Notes:
+            - O/N = Overnight rate
+            - T/N = Tomorrow/Next rate
+            - The spot date is when FX trades typically settle
+            - Different currencies have different standard settlement periods (T+0, T+1, T+2)
+        """
         if self.spot_date_shift == date_shift_enum.D1:
             return self.get_market_quote_by_label('O/N').tenor.maturity_date
 
@@ -1545,20 +1630,30 @@ def get_discounted_factor_spot_maturity_from_market_quote_over_1Y(discount_facto
     cash_flow_principal_spot_date = virtual_principal
     cash_flow_principal_maturity = -1 * virtual_principal
 
-    # duration is spot to intermediate interest payment date
-    cash_flow_intermediate_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * discount_factor_spot_backwardshifteddate.tenor.number_of_days / discount_factor_spot_backwardshifteddate.basis)
+    # Calculate interest payment at intermediate date
+    cash_flow_intermediate_interest = -1 * virtual_principal * (
+        market_quote_spot_maturity.value * 
+        discount_factor_spot_backwardshifteddate.tenor.number_of_days / 
+        discount_factor_spot_backwardshifteddate.basis
+    )
 
+    # Discount intermediate interest payment to spot date
     discounted_cash_flow_intermediate_interest = cash_flow_intermediate_interest * discount_factor_spot_backwardshifteddate.value
 
-    # including principal and maturity payment
+    # Calculate total discounted cash flow at maturity (including principal)
     discounted_cash_flow_maturity = 0 - cash_flow_principal_spot_date - discounted_cash_flow_intermediate_interest
 
-    # duration is intermediate interest payment date to maturity date
-    # equal to (spot date to maturity date minus spot date to intermediate interest payment date)
-    cash_flow_maturity_interest = -1 * virtual_principal * (market_quote_spot_maturity.value * (market_quote_spot_maturity.tenor.number_of_days - discount_factor_spot_backwardshifteddate.tenor.number_of_days) / discount_factor_spot_backwardshifteddate.basis)
+    # Calculate interest for period from intermediate date to maturity
+    cash_flow_maturity_interest = -1 * virtual_principal * (
+        market_quote_spot_maturity.value * 
+        (market_quote_spot_maturity.tenor.number_of_days - discount_factor_spot_backwardshifteddate.tenor.number_of_days) / 
+        discount_factor_spot_backwardshifteddate.basis
+    )
 
+    # Calculate discount factor value from cash flows
     discount_factor_spot_maturity_value = discounted_cash_flow_maturity / (cash_flow_maturity_interest + cash_flow_principal_maturity)
 
+    # Create and return discount factor object
     discount_factor_spot_maturity = market_quote_spot_maturity.get_discount_factor_spot_maturity(discount_factor_spot_maturity_value)
 
     return discount_factor_spot_maturity
@@ -1587,7 +1682,7 @@ def get_discounted_factor_spot_maturity_from_market_quote_over_1Ys(discount_fact
     # today-----------spot date----------intermediate interest payment date1--------1Y---intermediate interest payment date2-------2Y------maturity date
 
 
-    # for easy calculation only , any positive amount is workable. Not refecting in result.
+    # for easy calculation only , any positive amount is workable. Not reflecting in result.
     virtual_principal = 1000000
 
     cash_flow_spot_date_principal = virtual_principal
@@ -1797,7 +1892,7 @@ class cls_swap_point_panel(cls_rate_curve):
 
         return swap_point
 
-    def get_forwrd_rate_by_maturity(self, maturity_date:datetime.date)->cls_fx_forward_rate:
+    def get_forward_rate_by_maturity(self, maturity_date:datetime.date)->cls_fx_forward_rate:
 
         df_base_spot_maturity = self.df_curve_base_ccy.get_discount_factor_by_start_maturity(self.spot_date, maturity_date)
 

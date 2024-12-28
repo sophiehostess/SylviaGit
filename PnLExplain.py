@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-from log4py import logger
 import copy
 import Rate2 as Rate
 import Trade as Trade
@@ -29,7 +28,7 @@ class cls_fx_forward_pnl_explain():
         if trade.currency_pair.label != day1_spot_rate.currency_pair.label or \
            trade.currency_pair.label != day2_spot_rate.currency_pair.label or \
            day1_spot_rate.currency_pair.label != day2_spot_rate.currency_pair.label:
-            assert("currency pair(s) does not match, trade is {trade_label}, day1_spot is {day1_spot_lable}, day2_spot is {day2_spot_label}".format(trade_label=trade.currency_pair.label ,day1_spot_lable=day1_spot_rate.currency_pair.label,day2_spot_label=day2_spot_rate.currency_pair.label  ))
+            assert("currency pair(s) does not match, trade is {trade_label}, day1_spot is {day1_spot_label}, day2_spot is {day2_spot_label}".format(trade_label=trade.currency_pair.label ,day1_spot_label=day1_spot_rate.currency_pair.label,day2_spot_label=day2_spot_rate.currency_pair.label  ))
 
         if day1_date == day2_date :
             assert("date of day1 and day2 can not be same, day1 is {day1_date}, day2 is {day2_date}".format(day1_date=day1_date.strftime("%Y-%m-%d"), day2_date=day2_date.strftime("%Y-%m-%d")))
