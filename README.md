@@ -32,4 +32,17 @@ This library provides tools and utilities for handling FX trades, including spot
 - Forward trade sensitivities
 - Bucket risk analysis
 
-## Usage Example 
+## Dependencies
+- Python 3.x
+- log4py (for logging)
+- datetime (standard library)
+
+## Testing
+The library includes comprehensive unit tests covering:
+- Trade creation and management
+- Market quote curve construction
+- Discount factor calculations
+- PnL calculations
+- Risk metrics (DV01)
+
+Run tests using: 

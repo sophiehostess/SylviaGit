@@ -4,7 +4,6 @@
 import unittest
 
 import datetime
-from log4py import logger
 import Rate2 as Rate
 import Trade as Trade
 import PnLExplain as PnLExplain

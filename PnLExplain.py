@@ -8,6 +8,8 @@ import Trade as Trade
 import PnL as PnL
 
 
+# Class to explain and break down PnL (Profit and Loss) movements for FX forward trades
+# Decomposes PnL changes into three effects: time decay, spot rate movement, and yield curve movement
 class cls_fx_forward_pnl_explain():
     def __init__(self,
                  trade:Trade.cls_spot_forward_trade,
@@ -39,14 +41,13 @@ class cls_fx_forward_pnl_explain():
         self.day1_date = day1_date
         self.day2_date = day2_date
 
+        # Convert market quote curves to discount factor curves for both currencies and days
         day1_base_ccy_df_curve = day1_base_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, base_ccy_curve_basis)
         day1_und_ccy_df_curve = day1_und_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, und_ccy_curve_basis)
         day2_base_ccy_df_curve = day2_base_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, base_ccy_curve_basis)
         day2_und_ccy_df_curve = day2_und_ccy_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, und_ccy_curve_basis)
 
-        self.day1_spot_rate = day1_spot_rate
-        self.day2_spot_rate = day2_spot_rate
-
+        # Calculate Day 1 economic PnL using original rates and curves
         self.day1_eco_pnl = PnL.create_trade_eco_pnl_from_df_curves(self.trade,
                                                                     self.day1_spot_rate,
                                                                     day1_base_ccy_df_curve,
@@ -54,13 +55,15 @@ class cls_fx_forward_pnl_explain():
                                                                     self.day1_date
                                                                     )
 
+        # Create date-shifted curves to isolate time effect
         day1_base_ccy_date_shifted_market_quote_curve = self.__create_date_shifted_market_quote_curve(day1_base_ccy_market_quote_curve, day2_base_ccy_market_quote_curve)
         day1_und_ccy_date_shifted_market_quote_curve = self.__create_date_shifted_market_quote_curve(day1_und_ccy_market_quote_curve, day2_und_ccy_market_quote_curve)
 
         day1_base_ccy_date_shifted_df_curve = day1_base_ccy_date_shifted_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, base_ccy_curve_basis)
         day1_und_ccy_date_shifted_df_curve = day1_und_ccy_date_shifted_market_quote_curve.get_discount_factor_curve(rate_curve_linearization, und_ccy_curve_basis)
 
-
+        # Calculate PnL components:
+        # 1. Date shifted PnL - shows effect of time decay only
         self.date_shifted_eco_pnl = PnL.create_trade_eco_pnl_from_df_curves(self.trade,
                                                                             Rate.cls_fx_spot_rate(self.day1_spot_rate.currency_pair, self.day2_spot_rate.tenor, self.day1_spot_rate.value, quotation_mode=self.day1_spot_rate.quotation_mode),
                                                                             day1_base_ccy_date_shifted_df_curve,
@@ -68,6 +71,7 @@ class cls_fx_forward_pnl_explain():
                                                                             self.day2_date
                                                                             )
 
+        # 2. Spot rate shifted PnL - shows combined effect of time decay and spot rate movement
         self.spot_rate_shifted_eco_pnl = PnL.create_trade_eco_pnl_from_df_curves(self.trade,
                                                                                  self.day2_spot_rate,
                                                                                  day1_base_ccy_date_shifted_df_curve,
@@ -75,6 +79,7 @@ class cls_fx_forward_pnl_explain():
                                                                                  self.day2_date
                                                                                 )
 
+        # 3. Day 2 PnL - shows total effect including yield curve changes
         self.day2_eco_pnl = PnL.create_trade_eco_pnl_from_df_curves(self.trade,
                                                                     self.day2_spot_rate,
                                                                     day2_base_ccy_df_curve,
@@ -82,14 +87,12 @@ class cls_fx_forward_pnl_explain():
                                                                     self.day2_date
                                                                     )
 
-
+        # Calculate individual PnL effects
         eco_pnl_value_by_time_effect = self.date_shifted_eco_pnl.pnl_value - self.day1_eco_pnl.pnl_value
-
         eco_pnl_value_by_spot_rate_movement = self.spot_rate_shifted_eco_pnl.pnl_value - self.date_shifted_eco_pnl.pnl_value
-
         eco_pnl_value_by_yield_curve_movement = self.day2_eco_pnl.pnl_value - self.spot_rate_shifted_eco_pnl.pnl_value
 
-
+        # Store PnL components in separate objects
         pnl_currency = day1_base_ccy_df_curve.currency
         self.eco_pnl_by_time_effect = PnL.cls_pnl(pnl_currency ,self.day2_date)
         self.eco_pnl_by_time_effect.pnl_value = eco_pnl_value_by_time_effect
@@ -105,6 +108,10 @@ class cls_fx_forward_pnl_explain():
                                                  day1_market_quote_curve,
                                                  day2_market_quote_curve,
                                                  )->Rate.cls_market_quote_curve:
+        """
+        Creates a new market quote curve that uses Day 1 rates but Day 2 tenors
+        This helps isolate the effect of time decay in PnL calculations
+        """
         # use deepcopy to ensure not affecting the original curve
         result_mq_curve = copy.deepcopy(day1_market_quote_curve)
         result_rate_list = []
@@ -121,14 +128,17 @@ class cls_fx_forward_pnl_explain():
 
     @property
     def pnl_value_by_time(self)->float:
+        """Returns PnL change due to time decay effect"""
         return self.eco_pnl_by_time_effect.pnl_value
 
     @property
     def pnl_value_by_spot_rate(self)->float:
+        """Returns PnL change due to spot rate movements"""
         return self.eco_pnl_by_spot_rate_movement.pnl_value
 
     @property
     def pnl_value_by_yield_curve(self)->float:
+        """Returns PnL change due to yield curve movements"""
         return self.eco_pnl_by_yield_curve_movement.pnl_value
 
     @property
@@ -141,6 +151,7 @@ class cls_fx_forward_pnl_explain():
 
     @property
     def total_pl_movement_value(self)->float:
+        """Returns total PnL movement between Day 1 and Day 2"""
         return self.day2_pnl_value - self.day1_pnl_value
 
 

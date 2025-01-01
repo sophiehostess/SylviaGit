@@ -27,13 +27,14 @@ def get_reversed_quotation(quotation:str)->str:
 
 
 class linearization_enum(Enum):
+    """Enumeration for different interpolation methods used in rate calculations"""
     # Interpolate Log(DiscountFactor) linearly
     log_ds_factor = "log_ds_factor"
 
-    # Interpolate DiscountRate linearly
+    # Interpolate DiscountRate linearly  
     linear_ds_rate = "linear_ds_rate"
 
-    #interpolate DiscountRate*Time linearly
+    # Interpolate DiscountRate*Time linearly
     linear_rate_time = "linear_rate_time"
 
 class base_or_und_enum(Enum):
@@ -1311,13 +1312,13 @@ class cls_discount_factor_curve(cls_single_currency_rate_curve):
             - Different currencies have different standard settlement periods (T+0, T+1, T+2)
         """
         if self.spot_date_shift == date_shift_enum.D1:
-            return self.get_market_quote_by_label('O/N').tenor.maturity_date
+            return self.get_discount_factor_by_label('O/N').tenor.maturity_date
 
         elif self.spot_date_shift == date_shift_enum.D2:
-            return self.get_market_quote_by_label('T/N').tenor.maturity_date
+            return self.get_discount_factor_by_label('T/N').tenor.maturity_date
 
         elif self.spot_date_shift == date_shift_enum.D0:
-            return self.get_market_quote_by_label('O/N').tenor.start_date
+            return self.get_discount_factor_by_label('O/N').tenor.start_date
 
         else:
             assert("invalid spot date shift")
